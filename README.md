@@ -40,11 +40,11 @@ public struct Component2 : IComponent, IAutoResetComponent<Component2>, {
     public int Value;
 
     public Component2(int value) {
-    Value = value;
+        Value = value;
     }
 
     public void Reset(ref Component2 c) {
-    c.Value = 1;
+        c.Value = 1;
     }
 }
 ```
@@ -70,11 +70,20 @@ Entity entity = world.CreateEntity<IsTestEntity>();
 ```
 
 ```c#
-entity.Add(new Component1()); //adding a new component
-ref Component1 c1 = ref entity.Get<Component1>(); //take component
-ref Component2 c2 = ref entity.GetOrSet<Component2>(); //create a new one and take or take an already created component from the entity (may use IAutoResetComponent)
-bool isHasComponent2 = entity.Has<Component2>(); //check for component presence
-entity.Remove<Component1>(); //removing a component from an entity
+//adding a new component
+entity.Add(new Component1());
+
+//take component
+ref Component1 c1 = ref entity.Get<Component1>();
+
+//create a new one and take or take an already created component from the entity (may use IAutoResetComponent)
+ref Component2 c2 = ref entity.GetOrSet<Component2>();
+
+//check for component presence
+bool isHasComponent2 = entity.Has<Component2>();
+
+//removing a component from an entity
+entity.Remove<Component1>();
 ```
 
 Copying an entity creates a new entity with the same components. Copying a component can be configured using the IAutoCopyComponent interface.
@@ -85,9 +94,14 @@ var copy = entity1.Copy();
 ### Filters
 Filters maintain a list of all entities with certain components
 ```c#
-var filter1 = world.GetFilter(new FilterMask<Component1>()); //contains entities with component Component1
-var filter2 = world.GetFilter(new FilterMask<Component1,Component2>.Exclude<Component3>()); //contains entities with components Component1, Component2 and without component Component3
-var filter3 = world.GetFilter(new FilterMask<Component1>.Exclude<Component3>()); //contains entities with component Component1 and without component Component3
+//contains entities with component Component1
+var filter1 = world.GetFilter(new FilterMask<Component1>());
+
+//contains entities with components Component1, Component2 and without component Component3
+var filter2 = world.GetFilter(new FilterMask<Component1,Component2>.Exclude<Component3>());
+
+//contains entities with component Component1 and without component Component3
+var filter3 = world.GetFilter(new FilterMask<Component1>.Exclude<Component3>());
 
 foreach (Entity entity in filter1) {
     //any actions with the entity
@@ -122,15 +136,15 @@ public sealed class TestInitSystem : IInitSystem {
 ```
 The IUpdateSystem interface is needed to update the system
 ```c#
-    public sealed class TestUpdate2System : IUpdateSystem {
-        private FilterInject<Include<Component1>, Exclude<Component2>> _filter = default;
+public sealed class TestUpdate2System : IUpdateSystem {
+    private FilterInject<Include<Component1>, Exclude<Component2>> _filter = default;
 
-        public void Update() {
-            foreach (var entity in _filter.Value) {
-                entity.Add(new Component2());   
-            }
+    public void Update() {
+        foreach (var entity in _filter.Value) {
+            entity.Add(new Component2());   
         }
     }
+}
 ```
 Create systems. Supports 'Inject' data
 ```c#
