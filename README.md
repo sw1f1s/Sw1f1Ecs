@@ -6,6 +6,7 @@
     - [Entities](#entities)
     - [Filters](#filters)
     - [Systems](#systems)
+    - [Group Systems](#groupsystems)
     - [DI](#di)
 
 ## API
@@ -157,6 +158,30 @@ systems
 
 systems.Init();
 systems.Update();
+```
+
+### GroupSystems
+```c#
+public sealed class TestGroupSystems : IGroupSystem {
+    public string GroupName => nameof(TestGroupSystems);
+    public bool State => true;
+
+    public ISystem[] Systems => new ISystem[] {
+        new TestUpdate1System(),
+        new TestSubGroupSystems(),
+    };
+}
+
+public sealed class TestSubGroupSystems : IGroupSystem {
+    public string GroupName => nameof(TestSubGroupSystems);
+    public bool State => true;
+    public ISystem[] Systems => new ISystem[] {
+        new TestUpdate3System(),
+    };
+}
+
+//disabling a group of systems TestSubGroupSystems
+systems.SetActiveGroup(nameof(TestSubGroupSystems), false);
 ```
 
 ### DI
