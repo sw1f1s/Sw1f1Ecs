@@ -1,42 +1,31 @@
 namespace Sw1f1.Ecs {
     public class FilterMask {
-        protected List<int> _includes;
-        protected List<int> _excludes;
-            
+        protected BitMask _includes;
+        protected BitMask _excludes;
+        
         protected FilterMask() {
-            _includes = new List<int>(8);
-            _excludes = new List<int>(8);
+            _includes = new BitMask(Options.COMPONENT_ENTITY_CAPACITY);
+            _excludes = new BitMask(Options.COMPONENT_ENTITY_CAPACITY);
         }
 
-        internal int[] GetIncludes() {
-            return _includes.ToArray();
+        internal BitMask GetIncludes() {
+            return _includes;
         }
         
-        internal int[] GetExcludes() {
-            return _excludes.ToArray();
+        internal BitMask GetExcludes() {
+            return _excludes;
         }
 
         public override int GetHashCode() {
-            int includeHash = 0;
-            int excludeHash = 0;
-            
-            for (int i = 0; i < _includes.Count; i++) {
-                includeHash ^= _includes[i].GetHashCode();
-            }
-            
-            for (int i = 0; i < _excludes.Count; i++) {
-                excludeHash ^= _excludes[i].GetHashCode();
-            }
-
-            return HashCode.Combine(includeHash, excludeHash);
+            return _includes.GetHashCode() ^ _excludes.GetHashCode();
         }
 
         public static FilterMask Combine(FilterMask mask1, FilterMask mask2) {
             var mask = new FilterMask();
-            mask._includes.AddRange(mask1.GetIncludes());
-            mask._includes.AddRange(mask2.GetIncludes());
-            mask._excludes.AddRange(mask1.GetExcludes());
-            mask._excludes.AddRange(mask2.GetExcludes());
+            mask._includes = mask1._includes | mask2._includes;
+            mask._includes = mask1._includes | mask2._includes;
+            mask._excludes = mask1._excludes | mask2._excludes;
+            mask._excludes = mask1._excludes | mask2._excludes;
             return mask;
         }
     }
@@ -44,7 +33,7 @@ namespace Sw1f1.Ecs {
     public class FilterMaskExclude<Exc1> : FilterMask
         where Exc1 : struct, IComponent {
         public FilterMaskExclude() {
-            _excludes.Add(ComponentStorageIndex<Exc1>.StaticId);
+            _excludes.Set(ComponentStorageIndex<Exc1>.StaticId);
         }
     }
     
@@ -53,8 +42,8 @@ namespace Sw1f1.Ecs {
         where Exc2 : struct, IComponent {
         
         public FilterMaskExclude() {
-            _excludes.Add(ComponentStorageIndex<Exc1>.StaticId);
-            _excludes.Add(ComponentStorageIndex<Exc2>.StaticId);
+            _excludes.Set(ComponentStorageIndex<Exc1>.StaticId);
+            _excludes.Set(ComponentStorageIndex<Exc2>.StaticId);
         }
     }
 
@@ -62,13 +51,13 @@ namespace Sw1f1.Ecs {
             where Inc1 : struct, IComponent {
         
         public FilterMask() : base() {
-            _includes.Add(ComponentStorageIndex<Inc1>.StaticId);
+            _includes.Set(ComponentStorageIndex<Inc1>.StaticId);
         }
 
         public class Exclude<Exc1> : FilterMask<Inc1> 
             where Exc1 : struct, IComponent {
             public Exclude() : base() {
-                _excludes.Add(ComponentStorageIndex<Exc1>.StaticId);
+                _excludes.Set(ComponentStorageIndex<Exc1>.StaticId);
             }
         }
         
@@ -76,8 +65,8 @@ namespace Sw1f1.Ecs {
             where Exc1 : struct, IComponent
             where Exc2 : struct, IComponent {
             public Exclude() : base() {
-                _excludes.Add(ComponentStorageIndex<Exc1>.StaticId);
-                _excludes.Add(ComponentStorageIndex<Exc2>.StaticId);
+                _excludes.Set(ComponentStorageIndex<Exc1>.StaticId);
+                _excludes.Set(ComponentStorageIndex<Exc2>.StaticId);
             }
         }
     }
@@ -86,14 +75,14 @@ namespace Sw1f1.Ecs {
         where Inc1 : struct, IComponent
         where Inc2 : struct, IComponent {
         public FilterMask() : base() {
-            _includes.Add(ComponentStorageIndex<Inc1>.StaticId);
-            _includes.Add(ComponentStorageIndex<Inc2>.StaticId);
+            _includes.Set(ComponentStorageIndex<Inc1>.StaticId);
+            _includes.Set(ComponentStorageIndex<Inc2>.StaticId);
         }
         
         public class Exclude<Exc1> : FilterMask<Inc1, Inc2> 
             where Exc1 : struct, IComponent {
             public Exclude() : base() {
-                _excludes.Add(ComponentStorageIndex<Exc1>.StaticId);
+                _excludes.Set(ComponentStorageIndex<Exc1>.StaticId);
             }
         }
         
@@ -101,8 +90,8 @@ namespace Sw1f1.Ecs {
             where Exc1 : struct, IComponent
             where Exc2 : struct, IComponent {
             public Exclude() : base() {
-                _excludes.Add(ComponentStorageIndex<Exc1>.StaticId);
-                _excludes.Add(ComponentStorageIndex<Exc2>.StaticId);
+                _excludes.Set(ComponentStorageIndex<Exc1>.StaticId);
+                _excludes.Set(ComponentStorageIndex<Exc2>.StaticId);
             }
         }
     }
@@ -112,15 +101,15 @@ namespace Sw1f1.Ecs {
         where Inc2 : struct, IComponent
         where Inc3 : struct, IComponent {
         public FilterMask() : base() {
-            _includes.Add(ComponentStorageIndex<Inc1>.StaticId);
-            _includes.Add(ComponentStorageIndex<Inc2>.StaticId);
-            _includes.Add(ComponentStorageIndex<Inc3>.StaticId);
+            _includes.Set(ComponentStorageIndex<Inc1>.StaticId);
+            _includes.Set(ComponentStorageIndex<Inc2>.StaticId);
+            _includes.Set(ComponentStorageIndex<Inc3>.StaticId);
         }
         
         public class Exclude<Exc1> : FilterMask<Inc1, Inc2, Inc3> 
             where Exc1 : struct, IComponent {
             public Exclude() : base() {
-                _excludes.Add(ComponentStorageIndex<Exc1>.StaticId);
+                _excludes.Set(ComponentStorageIndex<Exc1>.StaticId);
             }
         }
         
@@ -128,8 +117,8 @@ namespace Sw1f1.Ecs {
             where Exc1 : struct, IComponent
             where Exc2 : struct, IComponent {
             public Exclude() : base() {
-                _excludes.Add(ComponentStorageIndex<Exc1>.StaticId);
-                _excludes.Add(ComponentStorageIndex<Exc2>.StaticId);
+                _excludes.Set(ComponentStorageIndex<Exc1>.StaticId);
+                _excludes.Set(ComponentStorageIndex<Exc2>.StaticId);
             }
         }
     }
@@ -140,16 +129,16 @@ namespace Sw1f1.Ecs {
         where Inc3 : struct, IComponent 
         where Inc4 : struct, IComponent {
         public FilterMask() : base() {
-            _includes.Add(ComponentStorageIndex<Inc1>.StaticId);
-            _includes.Add(ComponentStorageIndex<Inc2>.StaticId);
-            _includes.Add(ComponentStorageIndex<Inc3>.StaticId);
-            _includes.Add(ComponentStorageIndex<Inc4>.StaticId);
+            _includes.Set(ComponentStorageIndex<Inc1>.StaticId);
+            _includes.Set(ComponentStorageIndex<Inc2>.StaticId);
+            _includes.Set(ComponentStorageIndex<Inc3>.StaticId);
+            _includes.Set(ComponentStorageIndex<Inc4>.StaticId);
         }
         
         public class Exclude<Exc1> : FilterMask<Inc1, Inc2, Inc3, Inc4> 
             where Exc1 : struct, IComponent {
             public Exclude() : base() {
-                _excludes.Add(ComponentStorageIndex<Exc1>.StaticId);
+                _excludes.Set(ComponentStorageIndex<Exc1>.StaticId);
             }
         }
         
@@ -157,8 +146,8 @@ namespace Sw1f1.Ecs {
             where Exc1 : struct, IComponent
             where Exc2 : struct, IComponent {
             public Exclude() : base() {
-                _excludes.Add(ComponentStorageIndex<Exc1>.StaticId);
-                _excludes.Add(ComponentStorageIndex<Exc2>.StaticId);
+                _excludes.Set(ComponentStorageIndex<Exc1>.StaticId);
+                _excludes.Set(ComponentStorageIndex<Exc2>.StaticId);
             }
         }
     }
@@ -170,17 +159,17 @@ namespace Sw1f1.Ecs {
         where Inc4 : struct, IComponent
         where Inc5 : struct, IComponent{
         public FilterMask() : base() {
-            _includes.Add(ComponentStorageIndex<Inc1>.StaticId);
-            _includes.Add(ComponentStorageIndex<Inc2>.StaticId);
-            _includes.Add(ComponentStorageIndex<Inc3>.StaticId);
-            _includes.Add(ComponentStorageIndex<Inc4>.StaticId);
-            _includes.Add(ComponentStorageIndex<Inc5>.StaticId);
+            _includes.Set(ComponentStorageIndex<Inc1>.StaticId);
+            _includes.Set(ComponentStorageIndex<Inc2>.StaticId);
+            _includes.Set(ComponentStorageIndex<Inc3>.StaticId);
+            _includes.Set(ComponentStorageIndex<Inc4>.StaticId);
+            _includes.Set(ComponentStorageIndex<Inc5>.StaticId);
         }
         
         public class Exclude<Exc1> : FilterMask<Inc1, Inc2, Inc3, Inc4, Inc5> 
             where Exc1 : struct, IComponent {
             public Exclude() : base() {
-                _excludes.Add(ComponentStorageIndex<Exc1>.StaticId);
+                _excludes.Set(ComponentStorageIndex<Exc1>.StaticId);
             }
         }
         
@@ -188,8 +177,8 @@ namespace Sw1f1.Ecs {
             where Exc1 : struct, IComponent
             where Exc2 : struct, IComponent {
             public Exclude() : base() {
-                _excludes.Add(ComponentStorageIndex<Exc1>.StaticId);
-                _excludes.Add(ComponentStorageIndex<Exc2>.StaticId);
+                _excludes.Set(ComponentStorageIndex<Exc1>.StaticId);
+                _excludes.Set(ComponentStorageIndex<Exc2>.StaticId);
             }
         }
     }

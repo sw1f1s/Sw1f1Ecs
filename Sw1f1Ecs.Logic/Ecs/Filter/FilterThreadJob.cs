@@ -1,9 +1,20 @@
 ﻿namespace Sw1f1.Ecs {
-    /// <summary>
-    /// Работает только на изменение данных в компонентах, добавление и удаление компонентов в большом количестве сущностей может привести к гонке данных
-    /// </summary>
     public abstract class FilterThreadJob {
         public void Execute(Filter filter) {
+            if (!filter.IsConcurrent) {
+                ExecuteDefault(filter);
+            } else {
+                ExecuteParallel(filter);   
+            }
+        }
+
+        private void ExecuteDefault(Filter filter) {
+            foreach (var e in filter) {
+                ExecuteInternal(e);
+            }
+        }
+        
+        private void ExecuteParallel(Filter filter) {
             filter.Update();
             filter.Cache.Lock();
             Parallel.For(0, filter.Cache.Count, i => {

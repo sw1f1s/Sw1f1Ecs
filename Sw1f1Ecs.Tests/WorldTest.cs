@@ -4,16 +4,53 @@ using Sw1f1.Ecs.DI;
 namespace Sw1f1.Ecs.Tests {
     [TestFixture]
     public class WorldTest {
-        [TestCase(1)]
-        [TestCase(10)]
-        [TestCase(100)]
-        [TestCase(1000)]
-        public void Run_CreateEntity(int count) {
-            var world = WorldBuilder.Build();
+        [Test]
+        public void Run_CreateWorlds() {
+            var world1 = WorldBuilder.Build(true);
+            var world2 = WorldBuilder.Build(false);
+            var world3 = WorldBuilder.Build(true);
+            var world4 = WorldBuilder.Build(false);
+            
+            Assert.That(world1.Id, Is.EqualTo(0));
+            Assert.That(world2.Id, Is.EqualTo(1));
+            Assert.That(world3.Id, Is.EqualTo(2));
+            Assert.That(world4.Id, Is.EqualTo(3));
+            
+            Assert.That(world1.IsAlive(), Is.True);
+            Assert.That(world2.IsAlive(), Is.True);
+            Assert.That(world3.IsAlive(), Is.True);
+            Assert.That(world4.IsAlive(), Is.True);
+            
+            world1.Destroy();
+            world3.Destroy();
+            Assert.That(world1.IsAlive(), Is.False);
+            Assert.That(world3.IsAlive(), Is.False);
+            
+            var world5 = WorldBuilder.Build(true);
+            var world6 = WorldBuilder.Build(false);
+            Assert.That(world5.Id, Is.EqualTo(2));
+            Assert.That(world6.Id, Is.EqualTo(0));
+            
+            Assert.That(world1.IsAlive(), Is.False);
+            Assert.That(world3.IsAlive(), Is.False);
+            Assert.That(world5.IsAlive(), Is.True);
+            Assert.That(world6.IsAlive(), Is.True);
+        }
+        
+        [TestCase(1, false)]
+        [TestCase(10, false)]
+        [TestCase(100, false)]
+        [TestCase(1000, false)]
+        [TestCase(1, true)]
+        [TestCase(10, true)]
+        [TestCase(100, true)]
+        [TestCase(1000, true)]
+        public void Run_CreateEntity(int count, bool isConcurrent) {
+            var world = WorldBuilder.Build(isConcurrent);
             var filter1 = world.GetFilter(new FilterMask<Component1>());
             var filter3 = world.GetFilter(new FilterMask<Component3>());
             for (int i = 0; i < count; i++) {
-                var entity = world.CreateEntity();
+                var entity = world.CreateEntity<IsTestEntity>();
                 entity.Add(new Component1());
                 entity.GetOrSet<Component3>();
             }
@@ -29,15 +66,16 @@ namespace Sw1f1.Ecs.Tests {
             world.Destroy();
         }
         
-        [Test]
-        public void Run_LifeEntity() {
-            var world = WorldBuilder.Build();
+        [TestCase(false)]
+        [TestCase(true)]
+        public void Run_LifeEntity(bool isConcurrent) {
+            var world = WorldBuilder.Build(isConcurrent);
             
-            var entity1 = world.CreateEntity();
+            var entity1 = world.CreateEntity<IsTestEntity>();
             Assert.That(entity1.Id, Is.EqualTo(0));
             Assert.That(entity1.Gen, Is.EqualTo(0));
             
-            var entity2 = world.CreateEntity();
+            var entity2 = world.CreateEntity<IsTestEntity>();
             Assert.That(entity2.Id, Is.EqualTo(1));
             Assert.That(entity2.Gen, Is.EqualTo(0));
             
@@ -45,17 +83,21 @@ namespace Sw1f1.Ecs.Tests {
             
             Assert.That(entity1.IsAlive(), Is.False);
             
-            var entity3 = world.CreateEntity();
+            var entity3 = world.CreateEntity<IsTestEntity>();
             Assert.That(entity3.Id, Is.EqualTo(0));
             Assert.That(entity3.Gen, Is.EqualTo(1));
+            
+            entity2.Remove<IsTestEntity>();
+            Assert.That(entity2.IsAlive(), Is.False);
             
             world.Destroy();
         }
 
-        [Test]
-        public void Run_CopyEntity() {
-            var world = WorldBuilder.Build();
-            var entity1 = world.CreateEntity();
+        [TestCase(true)]
+        [TestCase(false)]
+        public void Run_CopyEntity(bool isConcurrent) {
+            var world = WorldBuilder.Build(isConcurrent);
+            var entity1 = world.CreateEntity<IsTestEntity>();
             entity1.Add(new Component1(100));
             entity1.GetOrSet<Component2>();
             entity1.Add(new Component3(1));
@@ -72,11 +114,12 @@ namespace Sw1f1.Ecs.Tests {
             world.Destroy();
         }
         
-        [Test]
-        public void Run_Components() {
-            var world = WorldBuilder.Build();
+        [TestCase(true)]
+        [TestCase(false)]
+        public void Run_Components(bool isConcurrent) {
+            var world = WorldBuilder.Build(isConcurrent);
             
-            var entity1 = world.CreateEntity();
+            var entity1 = world.CreateEntity<IsTestEntity>();
             entity1.Add(new Component1(100));
             Assert.That(entity1.Has<Component1>(), Is.True);
             
@@ -91,20 +134,21 @@ namespace Sw1f1.Ecs.Tests {
             world.Destroy();
         }
 
-        [Test]
-        public void Run_Filters() {
-            var world = WorldBuilder.Build();
+        [TestCase(false)]
+        [TestCase(true)]
+        public void Run_Filters(bool isConcurrent) {
+            var world = WorldBuilder.Build(isConcurrent);
             
-            var entity1 = world.CreateEntity();
+            var entity1 = world.CreateEntity<IsTestEntity>();
             entity1.Add(new Component1(100));
             entity1.Add(new Component2(true));
             entity1.Add(new Component3(15.5f));
             
-            var entity2 = world.CreateEntity();
+            var entity2 = world.CreateEntity<IsTestEntity>();
             entity2.Add(new Component1(200));
             entity2.Add(new Component3(0.5f));
             
-            var entity3 = world.CreateEntity();
+            var entity3 = world.CreateEntity<IsTestEntity>();
             entity3.Add(new Component1(50));
             
             var filter1 = world.GetFilter(new FilterMask<Component1>());
@@ -125,9 +169,10 @@ namespace Sw1f1.Ecs.Tests {
             world.Destroy();
         }
 
-        [Test]
-        public void Run_Systems() {
-            var world = WorldBuilder.Build();
+        [TestCase(true)]
+        [TestCase(false)]
+        public void Run_Systems(bool isConcurrent) {
+            var world = WorldBuilder.Build(isConcurrent);
             var systems = new Systems(world);
             systems
                 .Add(new TestInitSystem())
@@ -156,9 +201,10 @@ namespace Sw1f1.Ecs.Tests {
             world.Destroy();
         }
         
-        [Test]
-        public void Run_GroupSystems() {
-            var world = WorldBuilder.Build();
+        [TestCase(true)]
+        [TestCase(false)]
+        public void Run_GroupSystems(bool isConcurrent) {
+            var world = WorldBuilder.Build(isConcurrent);
             var systems = new Systems(world);
             systems
                 .Add(new TestInitSystem())
@@ -206,11 +252,12 @@ namespace Sw1f1.Ecs.Tests {
             world.Destroy();
         }
 
-        [Test]
-        public void Run_Exceptions() {
+        [TestCase(true)]
+        [TestCase(false)]
+        public void Run_Exceptions(bool isConcurrent) {
             var world = WorldBuilder.Build();
-            var entity1 = world.CreateEntity();
-            var entity2 = world.CreateEntity();
+            var entity1 = world.CreateEntity<IsTestEntity>();
+            var entity2 = world.CreateEntity<IsTestEntity>();
             Assert.Throws<Exception>(() => {
                 entity1.Get<Component1>();
             });
@@ -242,6 +289,8 @@ namespace Sw1f1.Ecs.Tests {
             });
         }
     }
+    
+    public struct IsTestEntity : IComponent { }
 
     public struct Component1 : IComponent {
         public int Value;
@@ -283,10 +332,10 @@ namespace Sw1f1.Ecs.Tests {
         private WorldInject _worldInject = default;
         
         public void Init() {
-            var entity1 = _worldInject.Value.CreateEntity();
+            var entity1 = _worldInject.Value.CreateEntity<IsTestEntity>();
             entity1.Add(new Component1(1));
             
-            var entity2 = _worldInject.Value.CreateEntity();
+            var entity2 = _worldInject.Value.CreateEntity<IsTestEntity>();
             entity2.Add(new Component1(1));
             entity2.Add(new Component3(0.5f));
         }

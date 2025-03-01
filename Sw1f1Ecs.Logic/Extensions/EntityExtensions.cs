@@ -1,32 +1,7 @@
-using System.Runtime.CompilerServices;
-
 namespace Sw1f1.Ecs {
     public static class EntityExtensions {
         private const string WORLD_EXCEPTION_DEAD_MESSAGE = "World {0} is dead.";
         private const string ENTITY_EXCEPTION_DEAD_MESSAGE = "{0} is dead.";
-        
-#if DEBUB
-        public static IReadOnlyList<object> CollectComponents(this Entity entity) {
-            if (!WorldBuilder.AliveWorld(entity.WorldId)) {
-                throw new Exception(string.Format(WORLD_EXCEPTION_DEAD_MESSAGE, entity.WorldId));
-            }
-            
-            var world = WorldBuilder.GetWorld(entity.WorldId);
-            if (!world.EntityIsAlive(entity)) {
-                throw new Exception(string.Format(ENTITY_EXCEPTION_DEAD_MESSAGE, entity));
-            }
-            
-            var components = new List<object>();
-            foreach (var component in world.Components) {
-                if (component.HasComponent(entity)) {
-                    var method = component.GetType().GetMethod("GetComponent");
-                    var result = method.Invoke(component, new object[] { entity });
-                    components.Add(result);
-                }
-            }
-            return components;
-        }
-#endif
         
         public static bool IsAlive(this Entity entity) {
             if (!WorldBuilder.AliveWorld(entity.WorldId)) {
@@ -76,7 +51,7 @@ namespace Sw1f1.Ecs {
             return ref world.GetComponent<T>(entity);
         }
         
-        public static ref T GetOrSet<T>(this Entity entity) where T : struct, IComponent {
+        public static ref T Set<T>(this Entity entity) where T : struct, IComponent {
             if (!WorldBuilder.AliveWorld(entity.WorldId)) {
                 throw new Exception(string.Format(WORLD_EXCEPTION_DEAD_MESSAGE, entity.WorldId));
             }
@@ -86,7 +61,24 @@ namespace Sw1f1.Ecs {
                 throw new Exception(string.Format(ENTITY_EXCEPTION_DEAD_MESSAGE, entity));
             }
             
-            return ref world.GetOrSetComponent<T>(entity);
+            return ref world.SetComponent<T>(entity);
+        }
+        
+        public static ref T GetOrSet<T>(this Entity entity) where T : struct, IComponent {
+            if (!WorldBuilder.AliveWorld(entity.WorldId)) {
+                throw new Exception(string.Format(WORLD_EXCEPTION_DEAD_MESSAGE, entity.WorldId));
+            }
+            
+            var world = WorldBuilder.GetWorld(entity.WorldId);
+            if (!world.EntityIsAlive(entity)) {
+                throw new Exception(string.Format(ENTITY_EXCEPTION_DEAD_MESSAGE, entity));
+            }
+
+            if (entity.Has<T>()) {
+                return ref entity.Get<T>();
+            }
+            
+            return ref entity.Set<T>();
         }
         
         public static void Remove<T>(this Entity entity) where T : struct, IComponent {
@@ -126,6 +118,26 @@ namespace Sw1f1.Ecs {
             }
             
             world.DestroyEntity(entity);
+        }
+        
+        internal static IReadOnlyList<IComponent> GetComponents(this Entity entity) {
+            if (!WorldBuilder.AliveWorld(entity.WorldId)) {
+                throw new Exception(string.Format(WORLD_EXCEPTION_DEAD_MESSAGE, entity.WorldId));
+            }
+            
+            var world = WorldBuilder.GetWorld(entity.WorldId);
+            if (!world.EntityIsAlive(entity)) {
+                throw new Exception(string.Format(ENTITY_EXCEPTION_DEAD_MESSAGE, entity));
+            }
+            
+            var entityData = world.Entities.Get(entity.Id);
+            var components = new IComponent[entityData.Components.Count];
+            int index = 0;
+            foreach (var componentId in entityData.Components) {
+                var storage = world.GetComponentStorage(componentId);
+                components[index] = storage.GetGeneralizedComponent(entity);
+            }
+            return components;
         }
     }   
 }

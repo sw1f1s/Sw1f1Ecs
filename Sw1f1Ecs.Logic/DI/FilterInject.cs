@@ -2,7 +2,7 @@ namespace Sw1f1.Ecs.DI {
     public struct FilterInject<Inc> : IDataInject 
         where Inc : struct, IInclude {
         public Filter Value { get; private set; }
-        void IDataInject.Fill(Systems systems) {
+        void IDataInject.Fill(ISystems systems) {
             Value = systems.World.GetFilter(default(Inc).GetMask());
         }
     }
@@ -11,7 +11,7 @@ namespace Sw1f1.Ecs.DI {
         where Inc : struct, IInclude
         where Exc : struct, IExclude {
         public Filter Value { get; private set; }
-        void IDataInject.Fill(Systems systems) {
+        void IDataInject.Fill(ISystems systems) {
             Value = systems.World.GetFilter(FilterMask.Combine(default(Inc).GetMask(), default(Exc).GetMask()));
         }
     }

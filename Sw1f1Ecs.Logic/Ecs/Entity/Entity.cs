@@ -4,9 +4,10 @@ namespace Sw1f1.Ecs {
         public int Gen { get; private set; }
         public int WorldId { get; private set; }
         
-#if DEBUB
-        public IReadOnlyList<object> Components => this.CollectComponents();
-#endif
+        /// <summary>
+        /// Only read
+        /// </summary>
+        public IReadOnlyList<IComponent> Components => this.GetComponents();
 
         internal Entity(int id, int gen, int worldId) {
             Id = id;

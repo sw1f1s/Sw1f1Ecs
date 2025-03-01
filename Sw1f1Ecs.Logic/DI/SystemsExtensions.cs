@@ -2,7 +2,7 @@ using System.Reflection;
 
 namespace Sw1f1.Ecs.DI {
     public static class SystemsExtensions {
-        public static Systems Inject(this Systems systems, params object[] injects) {
+        public static ISystems Inject(this ISystems systems, params object[] injects) {
             if (injects == null) {
                 injects = Array.Empty<object> ();
             }
@@ -14,7 +14,7 @@ namespace Sw1f1.Ecs.DI {
             return systems;
         }
 
-        private static void InjectToSystem(Systems systems, ISystem system, params object[] injects) {
+        private static void InjectToSystem(ISystems systems, ISystem system, params object[] injects) {
             foreach (var f in system.GetType ().GetFields (BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)) {
                 if (f.IsStatic) {
                     continue;
@@ -28,7 +28,7 @@ namespace Sw1f1.Ecs.DI {
             }
         }
         
-        private static bool InjectBuiltIns (FieldInfo fieldInfo, Systems systems, ISystem system) {
+        private static bool InjectBuiltIns (FieldInfo fieldInfo, ISystems systems, ISystem system) {
             if (typeof (IDataInject).IsAssignableFrom (fieldInfo.FieldType)) {
                 var instance = (IDataInject)fieldInfo.GetValue(system);
                 instance.Fill(systems);

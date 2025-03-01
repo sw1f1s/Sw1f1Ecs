@@ -1,6 +1,6 @@
 namespace Sw1f1.Ecs.DI {
     public interface IDataInject {
-        void Fill (Systems systems);
+        void Fill (ISystems systems);
     }
     
     public interface IInclude {

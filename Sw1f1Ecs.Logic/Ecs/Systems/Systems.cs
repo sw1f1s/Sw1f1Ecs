@@ -1,19 +1,19 @@
 namespace Sw1f1.Ecs {
-    public sealed class Systems : IDisposable {
-        private World _world;
+    public sealed class Systems : ISystems {
+        private IWorld _world;
         private readonly SystemContainer _systemContainer;
         private readonly Dictionary<string, InternalGroupSystem> _groupSystems = new(Options.SYSTEMS_CAPACITY);
         private bool _isDisposed;
         
-        public World World => _world;
+        public IWorld World => _world;
         public IReadOnlyList<ISystem> AllSystems => _systemContainer.GetAllSystems();
         
-        public Systems(World world) {
+        public Systems(IWorld world) {
             _world = world;
             _systemContainer = new SystemContainer();
         }
 
-        public Systems Add(ISystem system) {
+        public ISystems Add(ISystem system) {
             if (_isDisposed) {
                 throw new ObjectDisposedException(nameof(Systems));
             }

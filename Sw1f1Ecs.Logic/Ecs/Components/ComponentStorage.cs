@@ -1,37 +1,20 @@
 using System.Runtime.CompilerServices;
 
 namespace Sw1f1.Ecs {
-    internal abstract class ComponentStorage : ISparseItem {
-        public abstract int Id { get; }
-        public abstract bool HasComponent(Entity entity);
-        public abstract void RemoveComponent(Entity entity);
-        public abstract void CopyComponent(Entity fromEntity, Entity toEntity);
-        public abstract void Clear();
-        public abstract void DeepClear();
-    }
-    
 #if ENABLE_IL2CPP
     [Il2CppSetOption (Option.NullChecks, false)]
     [Il2CppSetOption (Option.ArrayBoundsChecks, false)]
 #endif
-    //TODO: Доработать многопоточное добалвение и удаление компонентов
-    internal sealed class ComponentStorage<T> : ComponentStorage where T : struct, IComponent {
-        private volatile SparseArray<EntityID> _components;
-        private volatile T[] _componentData;
-        private readonly AutoResetHandler _autoResetHandler;
-        private readonly AutoCopyHandler _autoCopyHandler;
+    internal sealed class ComponentStorage<T> : AbstractComponentStorage where T : struct, IComponent {
+        private readonly SparseArray<EntityID> _components;
+        private T[] _componentData;
+        private readonly AutoResetHandler<T> _autoResetHandler;
+        private readonly AutoCopyHandler<T> _autoCopyHandler;
         private readonly T _defaultInstance = default;
-        private readonly object _resizeLock = new object();
         
-        private delegate void AutoResetHandler (ref T c);
-        private delegate void AutoCopyHandler (ref T src, ref T dst);
-        private struct EntityID : ISparseItem {
-            public int Id { get; private set; }
-
-            public EntityID(int id) {
-                Id = id;
-            }
-        }
+        private bool _isDisposed;
+        
+        public override bool IsConcurrent => false;
 
         public override int Id => ComponentStorageIndex<T>.StaticId;
 
@@ -39,21 +22,101 @@ namespace Sw1f1.Ecs {
             _components = new SparseArray<EntityID>(Options.ENTITY_CAPACITY);
             _componentData = new T[capacity];
 
-            if (TryGetInterface(out IAutoCopyComponent<T> autoCopy)) {
+            if (TryGetInterface(ref _defaultInstance, out IAutoCopyComponent<T> autoCopy)) {
                 _autoCopyHandler = autoCopy.Copy;
             }
-            
-            if (TryGetInterface(out IAutoResetComponent<T> autoReset)) {
+
+            if (TryGetInterface(ref _defaultInstance, out IAutoResetComponent<T> autoReset)) {
                 _autoResetHandler = autoReset.Reset;
             }
         }
         
-        [MethodImpl (MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void AddComponent(Entity entity, ref T component) {
-            if (HasComponent(entity)) {
+            if (_isDisposed) {
+                throw new ObjectDisposedException(nameof(ComponentStorage<T>));
+            }
+            
+            if (HasComponentInternal(entity)) {
                 throw new Exception($"{entity} already contains {typeof(T).Name}");
             }
+            AddComponentInternal(entity, component);
+        }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public override IComponent GetGeneralizedComponent(Entity entity) {
+            return GetComponent(entity);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public ref T GetComponent(Entity entity) {
+            if (_isDisposed) {
+                throw new ObjectDisposedException(nameof(ComponentStorage<T>));
+            }
+            
+            if (!HasComponentInternal(entity)) {
+                throw new Exception($"{entity} not contains {typeof(T).Name}");
+            }
+
+            return ref GetComponentInternal(entity);
+        }
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public ref T SetComponent(Entity entity) {
+            if (_isDisposed) {
+                throw new ObjectDisposedException(nameof(ComponentStorage<T>));
+            }
+            
+            if (HasComponentInternal(entity)) {
+                throw new Exception($"{entity} already contains {typeof(T).Name}");
+            }
+                
+            var newComponent = new T();
+            _autoResetHandler?.Invoke(ref newComponent);
+            AddComponentInternal(entity, newComponent);
+            return ref GetComponentInternal(entity);
+        }
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public override bool HasComponent(Entity entity) {
+            if (_isDisposed) {
+                throw new ObjectDisposedException(nameof(ComponentStorage<T>));
+            }
+            
+            return HasComponentInternal(entity);
+        }
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public override void RemoveComponent(Entity entity) {
+            if (_isDisposed) {
+                throw new ObjectDisposedException(nameof(ComponentStorage<T>));
+            }
+            
+            if (!HasComponentInternal(entity)) {
+                throw new Exception($"{entity} not contains {typeof(T).Name}");
+            }
+            _components.Remove(entity.Id);
+        }
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public override void CopyComponent(Entity fromEntity, Entity toEntity) {
+            if (_isDisposed) {
+                throw new ObjectDisposedException(nameof(ComponentStorage<T>));
+            }
+            
+            if (!HasComponentInternal(fromEntity) || HasComponentInternal(toEntity)) {
+                return;
+            }
+
+            T srcComponent = GetComponent(fromEntity);
+            var newComponent = new T();
+            
+            _autoCopyHandler?.Invoke(ref srcComponent, ref newComponent);
+            AddComponentInternal(toEntity, newComponent);
+        }
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void AddComponentInternal(Entity entity, T component) {
             _components.Add(new EntityID(entity.Id));
             int index = _components.GetSparseIndex(entity.Id);
             TryResize(index);
@@ -61,94 +124,38 @@ namespace Sw1f1.Ecs {
         }
         
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
-        public ref T GetComponent(Entity entity) {
-            if (!HasComponent(entity)) {
-                throw new Exception($"{entity} not contains {typeof(T).Name}");
-            }
-            
-            int index = _components.GetSparseIndex(entity.Id);
-            return ref _componentData[index];
-        }
-        
-        [MethodImpl (MethodImplOptions.AggressiveInlining)]
-        public ref T GetOrSetComponent(Entity entity) {
-            if (!HasComponent(entity)) {
-                var newComponent = new T();
-                _autoResetHandler?.Invoke(ref newComponent);
-                AddComponent(entity, ref newComponent);
-            }
-            
-            int index = _components.GetSparseIndex(entity.Id);
-            return ref _componentData[index];
-        }
-        
-        [MethodImpl (MethodImplOptions.AggressiveInlining)]
-        public override bool HasComponent(Entity entity) {
+        private bool HasComponentInternal(Entity entity) {
             return _components.Has(entity.Id);
-        }
-        
-        [MethodImpl (MethodImplOptions.AggressiveInlining)]
-        public override void RemoveComponent(Entity entity) {
-            if (!HasComponent(entity)) {
-                throw new Exception($"{entity} not contains {typeof(T).Name}");
-            }
-            
-            _components.Remove(entity.Id);
         }
 
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
-        public override void CopyComponent(Entity fromEntity, Entity toEntity) {
-            if (!HasComponent(fromEntity) || HasComponent(toEntity)) {
-                return;
-            }
-            
-            
-            var newComponent = new T();
-            _autoCopyHandler?.Invoke(ref GetComponent(fromEntity), ref newComponent);
-            AddComponent(toEntity, ref newComponent);
+        private ref T GetComponentInternal(Entity entity) {
+            int index = _components.GetSparseIndex(entity.Id);
+            return ref _componentData[index];
         }
-        
-        [MethodImpl (MethodImplOptions.AggressiveInlining)]
-        public override void Clear() {
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal override void Clear() {
             _components.Clear();
         }
 
-        [MethodImpl (MethodImplOptions.AggressiveInlining)]
-        public override void DeepClear() {
-            _componentData = new T[_componentData.Length];
-            _components.DeepClear();
-        }
-
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void TryResize(int id) {
             while (id >= _componentData.Length) {
-                if (!Monitor.IsEntered(_resizeLock)) {
-                    lock (_resizeLock) {
-                        if (id >= _componentData.Length) {
-                            Resize();
-                        }
-                    }   
-                } else {
-                    Resize();
-                }
+                Resize();
             }
         }
 
-        [MethodImpl (MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void Resize() {
-            Array.Resize(ref _componentData, _componentData.Length * 2); 
+            Array.Resize(ref _componentData, _componentData.Length * 2);
         }
-        
-        private bool TryGetInterface<TInterface>(out TInterface obj) {
-            obj = default;
 
-            if (typeof(TInterface).IsAssignableFrom(typeof(T))) {
-                if (_defaultInstance is TInterface instance) {
-                    obj = instance;
-                    return true;
-                }
-            }
-
-            return false;
+        public override void Dispose() {
+            _isDisposed = true;
+            _componentData = new T[_componentData.Length];
+            _components.Dispose();
+            _components.Dispose();
         }
     }   
 }

@@ -12,16 +12,16 @@ namespace Sw1f1.Ecs.Tests {
                 .Add(new TestInjectSystem())
                 .Inject(new TestData());
             
-            var entity1 = world.CreateEntity();
+            var entity1 = world.CreateEntity<IsTestEntity>();
             entity1.GetOrSet<Component1>();
             entity1.GetOrSet<Component2>();
             entity1.GetOrSet<Component3>();
             
-            var entity2 = world.CreateEntity();
+            var entity2 = world.CreateEntity<IsTestEntity>();
             entity2.GetOrSet<Component1>();
             entity2.GetOrSet<Component2>();
             
-            var entity3 = world.CreateEntity();
+            var entity3 = world.CreateEntity<IsTestEntity>();
             entity3.GetOrSet<Component1>();
             
             systems.Update();
@@ -32,10 +32,11 @@ namespace Sw1f1.Ecs.Tests {
     }   
     
     public sealed class TestInjectSystem : IUpdateSystem {
-        private WorldInject _world;
-        private FilterInject<Include<Component1, Component2>, Exclude<Component3>> _filterInject;
-        private SystemsInject _systemsInject;
-        private CustomInject<TestData> _testData;
+        private readonly WorldInject _world = default;
+        private readonly FilterInject<Include<Component1, Component2>, Exclude<Component3>> _filterInject = default;
+        private readonly SystemsInject _systemsInject = default;
+        private readonly CustomInject<TestData> _testData = default;
+        
         public void Update() {
             Assert.That(_world.Value, Is.Not.Null);
             Assert.That(_filterInject.Value, Is.Not.Null);
