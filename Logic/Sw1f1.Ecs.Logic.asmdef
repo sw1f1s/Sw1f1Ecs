@@ -1,0 +1,14 @@
+{
+    "name": "Sw1f1.Ecs.Logic",
+    "rootNamespace": "Sw1f1.Ecs",
+    "references": [],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

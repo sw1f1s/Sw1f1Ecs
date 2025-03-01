@@ -1,0 +1,20 @@
+{
+    "name": "Sw1f1.Ecs.Tests",
+    "rootNamespace": "Sw1f1.Ecs.Tests",
+    "references": [
+        "GUID:5ca827925a7a344b6aa77b79377351f6",
+        "GUID:27619889b8ba8c24980f49ee34dbb44a",
+        "GUID:0acc523941302664db1f4e527237feb3"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

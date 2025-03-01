@@ -1,8 +1,8 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sw1f1Ecs.Logic", "Sw1f1Ecs.Logic\Sw1f1Ecs.Logic.csproj", "{5C650882-7934-48CF-B353-4B8A20FC5B5E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Logic", "Logic\Logic.csproj", "{5C650882-7934-48CF-B353-4B8A20FC5B5E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sw1f1Ecs.Tests", "Sw1f1Ecs.Tests\Sw1f1Ecs.Tests.csproj", "{C34CB442-C469-41B4-869E-51DAC99119D5}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tests", "Tests\Tests.csproj", "{C34CB442-C469-41B4-869E-51DAC99119D5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
