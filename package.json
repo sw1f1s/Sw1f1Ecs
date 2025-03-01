@@ -3,14 +3,16 @@
     "author": "Volodya Litvinov",
     "displayName": "Sw1f1Ecs",
     "description": "Sw1f1ECS - C# Entity Component System framework",
-    "unity": "2020.3",
+    "unity": "2022.3",
     "version": "0.2.1",
     "keywords": [
         "sw1f1secs",
         "ecs",
         "performance"
     ],
-    "dependencies": {},
+    "dependencies": {
+        "com.unity.collections": "2.5.3"
+    },
     "repository": {
         "type": "git",
         "url": "https://github.com/sw1f1s/Sw1f1Ecs.git"

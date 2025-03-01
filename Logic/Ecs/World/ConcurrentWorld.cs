@@ -161,7 +161,7 @@ namespace Sw1f1.Ecs {
             if (!_components.Has(componentId)) {
                 _components.Add(new ComponentStorage<T>(Options.COMPONENT_ENTITY_CAPACITY));
             }
-            
+
             return Unsafe.As<ComponentStorage<T>>(_components.Get(componentId));
         }
 
