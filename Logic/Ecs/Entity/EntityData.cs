@@ -40,8 +40,7 @@ namespace Sw1f1.Ecs {
         public void IncreaseGen() => _entity.IncreaseGen();
 
         public void Dispose() {
-            _components?.Clear();
-            _components = null;
+            _components.Clear();
         }
     } 
 }

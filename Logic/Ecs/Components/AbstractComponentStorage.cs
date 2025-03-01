@@ -1,6 +1,22 @@
 using System;
 
 namespace Sw1f1.Ecs {
+    internal struct ComponentId : ISparseItem {
+        public int Id { get; private set; }
+
+        public ComponentId(int id) {
+            Id = id;
+        }
+    }
+    
+    internal struct EntityID : ISparseItem {
+        public int Id { get; private set; }
+
+        public EntityID(int id) {
+            Id = id;
+        }
+    }
+    
     internal abstract class AbstractComponentStorage : ISparseItem, IConcurrentSupport, IDisposable {
         public abstract int Id { get; }
         public abstract bool IsConcurrent { get; }
@@ -14,14 +30,6 @@ namespace Sw1f1.Ecs {
         protected delegate void AutoResetHandler<T>(ref T c);
 
         protected delegate void AutoCopyHandler<T>(ref T src, ref T dst);
-
-        protected struct EntityID : ISparseItem {
-            public int Id { get; private set; }
-
-            public EntityID(int id) {
-                Id = id;
-            }
-        }
         
         protected bool TryGetInterface<T, TInterface>(ref T defaultInstance, out TInterface obj) {
             obj = default;

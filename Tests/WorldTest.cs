@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using NUnit.Framework;
 using Sw1f1.Ecs.DI;
 
@@ -49,10 +50,12 @@ namespace Sw1f1.Ecs.Tests {
         public void Run_CreateEntity(int count, bool isConcurrent) {
             var world = WorldBuilder.Build(isConcurrent);
             var filter1 = world.GetFilter(new FilterMask<Component1>());
+            var filter2 = world.GetFilter(new FilterMask<Component2>());
             var filter3 = world.GetFilter(new FilterMask<Component3>());
             for (int i = 0; i < count; i++) {
                 var entity = world.CreateEntity<IsTestEntity>();
                 entity.Add(new Component1());
+                entity.Add(new Component2());
                 entity.GetOrSet<Component3>();
             }
             
@@ -64,6 +67,18 @@ namespace Sw1f1.Ecs.Tests {
             
             Assert.That(filter1.GetCount(), Is.EqualTo(0));
             Assert.That(filter3.GetCount(), Is.EqualTo(count));
+            
+            foreach (var filter in filter2) {
+                var entity = world.CreateEntity<IsTestEntity>();
+                entity.Add(new Component1());
+                entity.Add(new Component2());
+                entity.GetOrSet<Component3>();
+            }
+            
+            Assert.That(filter1.GetCount(), Is.EqualTo(count));
+            Assert.That(filter2.GetCount(), Is.EqualTo(count * 2));
+            Assert.That(filter3.GetCount(), Is.EqualTo(count * 2));
+            
             world.Destroy();
         }
         
@@ -108,9 +123,13 @@ namespace Sw1f1.Ecs.Tests {
             Assert.That(copy.Has<Component2>(), Is.True);
             Assert.That(copy.Has<Component3>(), Is.True);
             
-            Assert.That(copy.Get<Component1>().Value,  Is.EqualTo(0));
+            Assert.That(copy.Get<Component1>().Value,  Is.EqualTo(100));
             Assert.That(copy.Get<Component2>().Value, Is.True);
             Assert.That(copy.Get<Component3>().Value, Is.EqualTo(1f));
+
+            entity1.Get<Component1>().Value = 50;
+            Assert.That(entity1.Get<Component1>().Value,  Is.EqualTo(50));
+            Assert.That(copy.Get<Component1>().Value,  Is.EqualTo(100));
             
             world.Destroy();
         }
@@ -139,7 +158,7 @@ namespace Sw1f1.Ecs.Tests {
         [TestCase(true)]
         public void Run_Filters(bool isConcurrent) {
             var world = WorldBuilder.Build(isConcurrent);
-            
+            List<Entity> cacheEntities = new List<Entity>();
             var entity1 = world.CreateEntity<IsTestEntity>();
             entity1.Add(new Component1(100));
             entity1.Add(new Component2(true));
@@ -154,18 +173,33 @@ namespace Sw1f1.Ecs.Tests {
             
             var filter1 = world.GetFilter(new FilterMask<Component1>());
             Assert.That(filter1.GetCount(), Is.EqualTo(3));
-            Assert.That(filter1.GetEntities()[0] == entity1, Is.True);
-            Assert.That(filter1.GetEntities()[1] == entity2, Is.True);
-            Assert.That(filter1.GetEntities()[2] == entity3, Is.True);
+            filter1.FillEntities(cacheEntities);
+            Assert.That(cacheEntities[0] == entity1, Is.True);
+            Assert.That(cacheEntities[1] == entity2, Is.True);
+            Assert.That(cacheEntities[2] == entity3, Is.True);
             
             var filter2 = world.GetFilter(new FilterMask<Component1>.Exclude<Component3>());
+            filter2.FillEntities(cacheEntities);
             Assert.That(filter2.GetCount(), Is.EqualTo(1));
-            Assert.That(filter2.GetEntities()[0], Is.EqualTo(entity3));
+            Assert.That(cacheEntities[0], Is.EqualTo(entity3));
             
             var filter3 = world.GetFilter(new FilterMask<Component1>.Exclude<Component2>());
+            filter3.FillEntities(cacheEntities);
             Assert.That(filter3.GetCount(), Is.EqualTo(2));
-            Assert.That(filter3.GetEntities()[0], Is.EqualTo(entity2));
-            Assert.That(filter3.GetEntities()[1], Is.EqualTo(entity3));
+            Assert.That(cacheEntities[0], Is.EqualTo(entity2));
+            Assert.That(cacheEntities[1], Is.EqualTo(entity3));
+            
+            var filterMask12 = new FilterMask<Component1, Component2>();
+            var filterMask21 = new FilterMask<Component2, Component1>();
+            Assert.That(filterMask12.GetHashId(), Is.EqualTo(filterMask21.GetHashId()));
+            
+            var filterMask12_3 = new FilterMask<Component1, Component2>.Exclude<Component3>();
+            var filterMask21_3 = new FilterMask<Component2, Component1>.Exclude<Component3>();
+            Assert.That(filterMask12_3.GetHashId(), Is.EqualTo(filterMask21_3.GetHashId()));
+            
+            var filterMask1_32 = new FilterMask<Component1>.Exclude<Component3, Component2>();
+            var filterMask1_23 = new FilterMask<Component1>.Exclude<Component2, Component3>();
+            Assert.That(filterMask1_32.GetHashId(), Is.EqualTo(filterMask1_23.GetHashId()));
             
             world.Destroy();
         }

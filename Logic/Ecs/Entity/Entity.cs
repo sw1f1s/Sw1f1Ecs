@@ -3,6 +3,7 @@ using System.Collections.Generic;
 
 namespace Sw1f1.Ecs {
     public struct Entity : ISparseItem {
+        public static Entity Empty = new Entity(-1, -1, -1);
         public int Id { get; private set; }
         public int Gen { get; private set; }
         public int WorldId { get; private set; }

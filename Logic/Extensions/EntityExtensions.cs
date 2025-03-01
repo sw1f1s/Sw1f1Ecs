@@ -139,6 +139,7 @@ namespace Sw1f1.Ecs {
             foreach (var componentId in entityData.Components) {
                 var storage = world.GetComponentStorage(componentId);
                 components[index] = storage.GetGeneralizedComponent(entity);
+                index++;
             }
             return components;
         }

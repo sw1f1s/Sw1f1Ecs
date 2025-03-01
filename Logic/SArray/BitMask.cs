@@ -6,7 +6,7 @@ namespace Sw1f1.Ecs {
     [Il2CppSetOption (Option.NullChecks, false)]
     [Il2CppSetOption (Option.ArrayBoundsChecks, false)]
 #endif
-    public class BitMask {
+    public struct BitMask {
         private const int BitsPerElement = 32;
         private uint[] _bits;
         private uint _count;
@@ -16,6 +16,7 @@ namespace Sw1f1.Ecs {
         public BitMask(int capacity) {
             int arraySize = (capacity + BitsPerElement - 1) / BitsPerElement;
             _bits = new uint[arraySize];
+            _count = 0;
         }
 
         private BitMask(BitMask other) {
@@ -80,7 +81,7 @@ namespace Sw1f1.Ecs {
             return new Enumerator(this);
         }
 
-        public override int GetHashCode() {
+        public int GetHashId() {
             unchecked {
                 const int prime = 16777619;
                 int hash = (int)2166136261;

@@ -7,12 +7,11 @@ namespace Sw1f1.Ecs {
     [Il2CppSetOption (Option.ArrayBoundsChecks, false)]
 #endif
     internal sealed class ComponentStorage<T> : AbstractComponentStorage where T : struct, IComponent {
-        private readonly SparseArray<EntityID> _components;
-        private T[] _componentData;
         private readonly AutoResetHandler<T> _autoResetHandler;
         private readonly AutoCopyHandler<T> _autoCopyHandler;
         private readonly T _defaultInstance = default;
-        
+        private SparseSet<EntityID> _components;
+        private T[] _componentData;
         private bool _isDisposed;
         
         public override bool IsConcurrent => false;
@@ -20,7 +19,7 @@ namespace Sw1f1.Ecs {
         public override int Id => ComponentStorageIndex<T>.StaticId;
 
         internal ComponentStorage(int capacity) {
-            _components = new SparseArray<EntityID>(Options.ENTITY_CAPACITY);
+            _components = new SparseSet<EntityID>(Options.ENTITY_CAPACITY);
             _componentData = new T[capacity];
 
             if (TryGetInterface(ref _defaultInstance, out IAutoCopyComponent<T> autoCopy)) {
@@ -110,7 +109,7 @@ namespace Sw1f1.Ecs {
             }
 
             T srcComponent = GetComponent(fromEntity);
-            var newComponent = new T();
+            var newComponent = srcComponent;
             
             _autoCopyHandler?.Invoke(ref srcComponent, ref newComponent);
             AddComponentInternal(toEntity, newComponent);

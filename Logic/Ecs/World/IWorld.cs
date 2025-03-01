@@ -3,7 +3,6 @@ namespace Sw1f1.Ecs {
         int Id { get; }
         internal bool IsAlive { get; }
         internal SparseArray<EntityData> Entities { get; }
-        internal SparseArray<AbstractComponentStorage> Components { get; }
         
         ref Entity CreateEntity<T>() where T : struct, IComponent;
         internal bool EntityIsAlive(Entity entity);
@@ -20,6 +19,7 @@ namespace Sw1f1.Ecs {
         internal bool HasComponentStorage(int componentId);
         
         Filter GetFilter(FilterMask mask);
+        internal void UpdateFilters();
         void Clear();
         internal void Destroy();
     }   

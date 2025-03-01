@@ -28,10 +28,8 @@ namespace Sw1f1.Ecs {
         }
 
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
-        internal void Update(int componentId) {
-            if (_includes.Has(componentId) || _excludes.Has(componentId)) {
-                _needUpdate = true;
-            }
+        internal void NeedUpdate() {
+            _needUpdate = true;
         }
         
         public Enumerator GetEnumerator() {
@@ -39,6 +37,7 @@ namespace Sw1f1.Ecs {
                 throw new ObjectDisposedException(GetType().Name);
             }
             
+            _world.UpdateFilters();
             return new Enumerator(this);
         }
         
@@ -47,7 +46,7 @@ namespace Sw1f1.Ecs {
             if (_isDisposed) {
                 throw new ObjectDisposedException(GetType().Name);
             }
-
+            _world.UpdateFilters();
             if (!_needUpdate) {
                 return _сache.Count;
             }
@@ -59,19 +58,34 @@ namespace Sw1f1.Ecs {
 
             return count;
         }
-
+        
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
-        public IReadOnlyList<Entity> GetEntities() {
+        public List<Entity> FillEntities(List<Entity> entities) {
             if (_isDisposed) {
                 throw new ObjectDisposedException(GetType().Name);
             }
             
-            var list = new List<Entity>();
+            _world.UpdateFilters();
+            entities.Clear();
             foreach (var entity in this) {
-                list.Add(entity);
+                entities.Add(entity);
             }
 
-            return list;
+            return entities;
+        }
+        
+        [MethodImpl (MethodImplOptions.AggressiveInlining)]
+        public Entity GetFirstOrDefault() {
+            if (_isDisposed) {
+                throw new ObjectDisposedException(GetType().Name);
+            }
+            
+            _world.UpdateFilters();
+            foreach (var entity in this) {
+                return entity;
+            }
+
+            return Entity.Empty;
         }
         
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
@@ -80,6 +94,7 @@ namespace Sw1f1.Ecs {
                 throw new ObjectDisposedException(GetType().Name);
             }
 
+            _world.UpdateFilters();
             if (!_needUpdate) {
                 return;
             }
@@ -90,12 +105,10 @@ namespace Sw1f1.Ecs {
         public void Dispose() {
             _isDisposed = true;
             _world = null;
-            _includes?.Clear();
-            _excludes?.Clear();
+            _includes.Clear();
+            _excludes.Clear();
             _сache?.Dispose();
             _сache = null;
-            _includes = null;
-            _excludes = null;
         }
         
         public struct Enumerator : IDisposable {

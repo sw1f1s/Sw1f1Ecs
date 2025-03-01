@@ -61,6 +61,18 @@ namespace Sw1f1.Ecs.DI {
         }
     }
     
+    public struct Include<Inc1, Inc2, Inc3, Inc4, Inc5, Inc6> : IInclude 
+        where Inc1 : struct, IComponent
+        where Inc2 : struct, IComponent 
+        where Inc3 : struct, IComponent 
+        where Inc4 : struct, IComponent 
+        where Inc5 : struct, IComponent 
+        where Inc6 : struct, IComponent {
+        FilterMask IInclude.GetMask() {
+            return new FilterMask<Inc1, Inc2, Inc3, Inc4, Inc5, Inc6>();
+        }
+    }
+    
     public struct Exclude<Exc1> : IExclude 
         where Exc1 : struct, IComponent {
         FilterMask IExclude.GetMask() {

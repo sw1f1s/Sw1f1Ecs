@@ -7,47 +7,42 @@ namespace Sw1f1.Ecs {
     [Il2CppSetOption (Option.ArrayBoundsChecks, false)]
 #endif
     public sealed class SparseArray<T> : IDisposable where T : ISparseItem {
-        private T[] _denseItems;
-        private uint[] _sparseItems;
-        private uint _denseItemsCount;
-        
+        private SparseSet<T> _data;
         private uint _lock;
-        private DelayedOperation<T>[] _delayedOps;
-        private uint _delayedOpsCount;
-        
+        private SparseSet<DelayedOperation<T>> _delayedOps;
         private bool _isDisposed;
         
-        public T[] DenseItems => _denseItems;
-        public int Count => (int)_denseItemsCount;
+        public T[] DenseItems => _data.DenseItems;
+        public int Count => _data.Count;
         
         public SparseArray(int capacity) {
-            _denseItems = new T[capacity];
-            _sparseItems = new uint[capacity];
-            _delayedOps = new DelayedOperation<T>[capacity];
-            _denseItemsCount = 0;
+            _data = new SparseSet<T>(capacity);
+            _delayedOps = new SparseSet<DelayedOperation<T>>(4);
             _lock = 0;
         }
         
+        public SparseArray(SparseArray<T> copy) {
+            _data = copy._data;
+            _delayedOps = copy._delayedOps;
+            _lock = copy._lock;
+        }
+        
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
-        public bool Add(T item) {
+        public void Add(T item) {
             if (_isDisposed) {
                 throw new ObjectDisposedException(nameof(SparseArray<T>));
             }
             
             if (Has(item.Id)) {
-                return false;
+                throw new Exception($"{nameof(SparseArray<T>)} already contains an item with id {item.Id}");
             }
             
             if (_lock > 0) {
-                return AddDelayedOp(new DelayedOperation<T>(item));
+                AddDelayedOp(new DelayedOperation<T>(item));
+                return;
             }
 
-            TryResize(item.Id);
-            
-            _denseItems[_denseItemsCount] = item;
-            _sparseItems[item.Id] = ++_denseItemsCount;
-            
-            return true;
+            _data.Add(item);
         }
         
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
@@ -56,7 +51,11 @@ namespace Sw1f1.Ecs {
                 throw new ObjectDisposedException(nameof(SparseArray<T>));
             }
             
-            return id >= 0 && id < _sparseItems.Length && _sparseItems[id] != 0;
+            if (_lock > 0 && _delayedOps.Has(id)) {
+                return _delayedOps.Get(id).IsAdd;
+            }
+
+            return _data.Has(id);
         }
         
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
@@ -65,8 +64,12 @@ namespace Sw1f1.Ecs {
                 throw new ObjectDisposedException(nameof(SparseArray<T>));
             }
             
-            uint denseIndex = _sparseItems[id] - 1;
-            return ref _denseItems[denseIndex];
+            if (_lock > 0 && _delayedOps.Has(id) && _delayedOps.Get(id).IsAdd) {
+                ref var ops = ref _delayedOps.Get(id);
+                return ref ops.GetRefValue(ref ops);
+            }
+            
+            return ref _data.Get(id);
         }
 
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
@@ -74,8 +77,8 @@ namespace Sw1f1.Ecs {
             if (_isDisposed) {
                 throw new ObjectDisposedException(nameof(SparseArray<T>));
             }
-            
-            return (int)_sparseItems[id] - 1;
+
+            return _data.GetSparseIndex(id);
         }
         
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
@@ -89,19 +92,10 @@ namespace Sw1f1.Ecs {
             }
             
             if (_lock > 0) {
-                return AddDelayedOp(new DelayedOperation<T>(id));
+                AddDelayedOp(new DelayedOperation<T>(id));
+                return true;
             }
-            
-            uint denseIndex = _sparseItems[id] - 1;
-            _sparseItems[id] = 0;
-
-            _denseItemsCount--;
-            uint lastIndex = _denseItemsCount;
-            if (lastIndex > denseIndex) {
-                _denseItems[denseIndex] = _denseItems[lastIndex];
-                _sparseItems[_denseItems[denseIndex].Id] = denseIndex + 1;
-            }
-
+            _data.Remove(id);
             return true;
         }
 
@@ -111,11 +105,8 @@ namespace Sw1f1.Ecs {
                 throw new ObjectDisposedException(nameof(SparseArray<T>));
             }
             
-            for (int i = 0; i < _denseItemsCount; i++) {
-                int sparseIndex = _denseItems[i].Id;
-                _sparseItems[sparseIndex] = 0;
-            }
-            _denseItemsCount = 0;
+            _data.Clear();
+            _delayedOps.Clear();
         }
 
         public Enumerator<T> GetEnumerator() {
@@ -130,35 +121,15 @@ namespace Sw1f1.Ecs {
             if (_isDisposed) {
                 throw new ObjectDisposedException(nameof(SparseArray<T>));
             }
-            
-            string s = string.Empty;
-            foreach (var value in this) {
-                s += value + ", ";
-            }
-            return s;
-        }
-        
-        [MethodImpl (MethodImplOptions.AggressiveInlining)]
-        private void TryResize(int id) {
-            while (_denseItemsCount >= _denseItems.Length || id >= _sparseItems.Length) {
-                Resize();
-            }
+            return _data.ToString();
         }
 
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
-        private void Resize() {
-            Array.Resize(ref _denseItems, _denseItems.Length * 2);
-            Array.Resize(ref _sparseItems, _sparseItems.Length * 2);
-        }
-
-        [MethodImpl (MethodImplOptions.AggressiveInlining)]
-        private bool AddDelayedOp(DelayedOperation<T> op) {
-            if (_delayedOpsCount >= _delayedOps.Length) {
-                Array.Resize(ref _delayedOps, _delayedOps.Length * 2);
+        private void AddDelayedOp(DelayedOperation<T> op) {
+            if (_delayedOps.Has(op.Id)) {
+                _delayedOps.Remove(op.Id);
             }
-
-            _delayedOps[_delayedOpsCount++] = op;
-            return true;
+            _delayedOps.Add(op);
         }
         
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
@@ -172,29 +143,22 @@ namespace Sw1f1.Ecs {
             if (_lock > 0) {
                 return;
             }
-            
-            for (int i = 0; i < _delayedOpsCount; i++) {
-                var delayedOp = _delayedOps[i];
+
+            foreach (var delayedOp in _delayedOps) {
                 if (delayedOp.IsAdd) {
                     Add(delayedOp.Value);
                 }else {
-                    Remove(delayedOp.Index);
+                    Remove(delayedOp.Id);
                 }
             }
-
-            _delayedOpsCount = 0;
+            _delayedOps.Clear();
             _lock = 0;
         }
         
         public void Dispose() {
             _isDisposed = true;
-            for (int i = 0; i < _denseItems.Length; i++) {
-                _denseItems[i] = default(T);
-                _sparseItems[i] = 0;
-            }
-            
-            _denseItemsCount = 0;
-            _lock = 0;
+            _data.Dispose();
+            _delayedOps.Dispose();
         }
 
         public struct Enumerator<T> : IDisposable where T : ISparseItem {
@@ -211,7 +175,7 @@ namespace Sw1f1.Ecs {
 
             public T Current {
                 [MethodImpl (MethodImplOptions.AggressiveInlining)]
-                get => _data._denseItems[_idx];
+                get => _data.DenseItems[_idx];
             }
 
             [MethodImpl (MethodImplOptions.AggressiveInlining)]
@@ -222,24 +186,6 @@ namespace Sw1f1.Ecs {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void Dispose() {
                 _data?.Unlock();
-            }
-        }
-        
-        private struct DelayedOperation<T> where T : ISparseItem {
-            public readonly bool IsAdd;
-            public readonly int Index;
-            public readonly T Value;
-
-            public DelayedOperation(T value) {
-                IsAdd = true;
-                Value = value;
-                Index = 0;
-            }
-            
-            public DelayedOperation(int index) {
-                IsAdd = false;
-                Index = index;
-                Value = default(T);
             }
         }
     } 
