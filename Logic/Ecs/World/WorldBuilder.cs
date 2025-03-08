@@ -15,6 +15,14 @@ namespace Sw1f1.Ecs {
         }
 
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
+        public static void AllDestroy() {
+            foreach (var world in Worlds) {
+                world.Destroy();
+            }
+            Worlds.Clear();
+        }
+
+        [MethodImpl (MethodImplOptions.AggressiveInlining)]
         public static IWorld GetWorld(int worldId) {
             return Worlds.Get(worldId);
         }

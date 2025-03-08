@@ -347,6 +347,11 @@ namespace Sw1f1.Ecs.Tests {
                 entity2.Has<Component1>();
             });
         }
+        
+        [OneTimeTearDown]
+        public void Cleanup() {
+          WorldBuilder.AllDestroy();
+        }
     }
     
     public struct IsTestEntity : IComponent { }

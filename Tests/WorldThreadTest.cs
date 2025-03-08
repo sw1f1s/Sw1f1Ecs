@@ -98,6 +98,11 @@ namespace Sw1f1.Ecs.Tests {
             world.Destroy();
         }
         
+        [OneTimeTearDown]
+        public void Cleanup() {
+            WorldBuilder.AllDestroy();
+        }
+        
         private class IncreaseComponent1FilterThreadJob : FilterThreadJob {
             protected override void ExecuteInternal(Entity entity) {
                 ref var c = ref entity.Get<Component1>();

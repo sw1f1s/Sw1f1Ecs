@@ -29,6 +29,11 @@ namespace Sw1f1.Ecs.Tests {
             systems.Dispose();
             world.Destroy();
         }
+        
+        [OneTimeTearDown]
+        public void Cleanup() {
+            WorldBuilder.AllDestroy();
+        }
     }   
     
     public sealed class TestInjectSystem : IUpdateSystem {
