@@ -95,6 +95,13 @@ namespace Sw1f1.Ecs {
             if (!HasComponentInternal(entity)) {
                 throw new Exception($"{entity} not contains {typeof(T).Name}");
             }
+            
+            int index = _components.GetSparseIndex(entity.Id);
+            int lastIndex = _components.Count - 1;
+            if (lastIndex > index) {
+                _componentData[index] = _componentData[lastIndex];
+            }
+            
             _components.Remove(entity.Id);
         }
         

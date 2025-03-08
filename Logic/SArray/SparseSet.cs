@@ -55,7 +55,7 @@ namespace Sw1f1.Ecs {
                 _sparseItems[_denseItems[denseIndex].Id] = denseIndex + 1;
             }
         }
-
+        
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
         public void Clear() {
             for (int i = 0; i < _denseItemsCount; i++) {

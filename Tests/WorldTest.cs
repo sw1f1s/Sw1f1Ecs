@@ -151,6 +151,30 @@ namespace Sw1f1.Ecs.Tests {
 
             entity1.Remove<Component1>();
             Assert.That(entity1.Has<Component1>(), Is.False);
+            
+            world.Destroy();
+        }
+        
+        [TestCase(false)]
+        [TestCase(true)]
+        public void Run_Any_Remove_Components(bool isConcurrent) {
+            var world = WorldBuilder.Build(isConcurrent);
+            
+            var entity1 = world.CreateEntity<IsTestEntity>();
+            entity1.Add(new Component1(1));
+            var entity2 = world.CreateEntity<IsTestEntity>();
+            entity2.Add(new Component1(2));
+            var entity3 = world.CreateEntity<IsTestEntity>();
+            entity3.Add(new Component1(3));
+            
+            Assert.That(entity1.Get<Component1>().Value, Is.EqualTo(1));
+            Assert.That(entity2.Get<Component1>().Value, Is.EqualTo(2));
+            Assert.That(entity3.Get<Component1>().Value, Is.EqualTo(3));
+            
+            entity2.Destroy();
+            Assert.That(entity1.Get<Component1>().Value, Is.EqualTo(1));
+            Assert.That(entity3.Get<Component1>().Value, Is.EqualTo(3));
+            
             world.Destroy();
         }
 
