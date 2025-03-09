@@ -19,14 +19,17 @@ namespace Sw1f1.Ecs {
         
         internal SparseArray<Entity> Cache => _сache;
         public bool IsConcurrent => _world.IsConcurrent;
+        public BitMask Includes => _includes;
+        public BitMask Excludes => _excludes;
+        
         /// <summary>
         /// Only read
         /// </summary>
-        public IReadOnlyList<Type> Includes => _world.GetTypeComponents(_includes);
+        public IReadOnlyList<Type> TypeIncludes => _world.GetTypeComponents(_includes);
         /// <summary>
         /// Only read
         /// </summary>
-        public IReadOnlyList<Type> Excludes => _world.GetTypeComponents(_excludes);
+        public IReadOnlyList<Type> TypeExcludes => _world.GetTypeComponents(_excludes);
         
         public Filter(FilterMask mask, IWorld world) {
             _world = world;
