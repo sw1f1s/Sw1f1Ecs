@@ -1,23 +1,8 @@
 using System;
 
 namespace Sw1f1.Ecs {
-    internal struct ComponentId : ISparseItem {
-        public int Id { get; private set; }
-
-        public ComponentId(int id) {
-            Id = id;
-        }
-    }
-    
-    internal struct EntityID : ISparseItem {
-        public int Id { get; private set; }
-
-        public EntityID(int id) {
-            Id = id;
-        }
-    }
-    
-    internal abstract class AbstractComponentStorage : ISparseItem, IConcurrentSupport, IDisposable {
+    internal abstract class AbstractComponentStorage : IConcurrentSupport, IDisposable {
+        public abstract Type ComponentType { get; }
         public abstract int Id { get; }
         public abstract bool IsConcurrent { get; }
         public abstract IComponent GetGeneralizedComponent(Entity entity);

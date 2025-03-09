@@ -6,35 +6,59 @@ namespace Sw1f1.Ecs {
     [Il2CppSetOption (Option.NullChecks, false)]
     [Il2CppSetOption (Option.ArrayBoundsChecks, false)]
 #endif
-    public struct BitMask {
+    public struct BitMask : IDisposable {
         private const int BitsPerElement = 32;
         private uint[] _bits;
         private uint _count;
+        private bool _isDisposed;
         
         public uint Count => _count;
+        public int Hash => GetHashId();
         
         public BitMask(int capacity) {
             int arraySize = (capacity + BitsPerElement - 1) / BitsPerElement;
             _bits = new uint[arraySize];
             _count = 0;
+            _isDisposed = false;
         }
 
-        private BitMask(BitMask other) {
-            _bits = new uint[other._bits.Length];
-            _count = other._count;
-            Array.Copy(other._bits, _bits, other._bits.Length);
+        private BitMask(in BitMask copy) {
+            if (copy._isDisposed) {
+                throw new ObjectDisposedException(nameof(UnsafeBitMask));
+            }
+            
+            _bits = new uint[copy._bits.Length];
+            _count = copy._count;
+            Array.Copy(copy._bits, _bits, copy._bits.Length);
+            _isDisposed = false;
+        }
+
+        public UnsafeBitMask AsUnsafe() {
+            UnsafeBitMask unsafeBitMask = new UnsafeBitMask((uint)_bits.Length);
+            foreach (var value in this){
+                unsafeBitMask.Set(value);
+            }
+            return unsafeBitMask;
         }
         
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
         public void Set(int id) {
+            if (_isDisposed) {
+                throw new ObjectDisposedException(nameof(UnsafeBitMask));
+            }
+            
             var (arrayIndex, bitIndex) = GetIndices(id);
-            TryResize(arrayIndex + 1);
+            TryResize(arrayIndex);
             _bits[arrayIndex] |= 1u << bitIndex;
             _count++;
         }
         
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
         public void Unset(int id) {
+            if (_isDisposed) {
+                throw new ObjectDisposedException(nameof(UnsafeBitMask));
+                
+            }
             var (arrayIndex, bitIndex) = GetIndices(id);
             if (arrayIndex < _bits.Length) {
                 _bits[arrayIndex] &= ~(1u << bitIndex);
@@ -44,22 +68,32 @@ namespace Sw1f1.Ecs {
         
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
         public bool Has(int id) {
+            if (_isDisposed) {
+                throw new ObjectDisposedException(nameof(UnsafeBitMask));
+            }
+            
             var (arrayIndex, bitIndex) = GetIndices(id);
             return arrayIndex < _bits.Length && (_bits[arrayIndex] & (1u << bitIndex)) != 0;
         }
         
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
         public void Clear() {
+            if (_isDisposed) {
+                throw new ObjectDisposedException(nameof(UnsafeBitMask));
+            }
+            
             Array.Clear(_bits, 0, _bits.Length);
         }
         
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
-        public bool HasAllCollision(BitMask other) {
-            if (_bits.Length < other._bits.Length)
-                return false;
+        public bool HasAllCollision(in BitMask other) {
+            if (_isDisposed || other._isDisposed) {
+                throw new ObjectDisposedException(nameof(UnsafeBitMask));
+            }
             
             for (int i = 0; i < other._bits.Length; i++) {
-                if ((_bits[i] & other._bits[i]) != other._bits[i]) {
+                uint bit = i >= _bits.Length ? 0 : _bits[i];
+                if ((bit & other._bits[i]) != other._bits[i]) {
                     return false;
                 }
             }
@@ -67,7 +101,11 @@ namespace Sw1f1.Ecs {
         }
 
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
-        public bool HasAnyCollision(BitMask other) {
+        public bool HasAnyCollision(in BitMask other) {
+            if (_isDisposed || other._isDisposed) {
+                throw new ObjectDisposedException(nameof(UnsafeBitMask));
+            }
+            
             int minLength = Math.Min(_bits.Length, other._bits.Length);
             for (int i = 0; i < minLength; i++) {
                 if ((_bits[i] & other._bits[i]) != 0) {
@@ -78,17 +116,25 @@ namespace Sw1f1.Ecs {
         }
         
         public Enumerator GetEnumerator() {
+            if (_isDisposed) {
+                throw new ObjectDisposedException(nameof(UnsafeBitMask));
+            }
+            
             return new Enumerator(this);
         }
 
-        public int GetHashId() {
+        [MethodImpl (MethodImplOptions.AggressiveInlining)]
+        private int GetHashId() {
+            if (_isDisposed) {
+                throw new ObjectDisposedException(nameof(UnsafeBitMask));
+            }
+            
             unchecked {
                 const int prime = 16777619;
                 int hash = (int)2166136261;
 
-                foreach (uint bit in _bits) {
-                    hash ^= (int)bit;
-                    hash *= prime;
+                for (int i = 0; i < _bits.Length; i++) {
+                    hash = (hash * prime) ^ ((i * 397) ^ (int)_bits[i]);
                 }
 
                 return hash;
@@ -97,15 +143,26 @@ namespace Sw1f1.Ecs {
 
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
         private void TryResize(int minCapacity) {
-            if (_bits.Length < minCapacity) {
-                int newCapacity = Math.Max(_bits.Length * 2, minCapacity);
-                uint[] newBits = new uint[newCapacity];
-                Array.Copy(_bits, newBits, _bits.Length);
-                _bits = newBits;
+            while (_bits.Length <= minCapacity) {
+                Array.Resize(ref _bits, _bits.Length * 2);
             }
         }
+        
+        public void Dispose() {
+            if (_isDisposed) {
+                return;
+            }
+            
+            _isDisposed = true;
+            _bits = null;
+            _count = 0;
+        }
 
-        public static BitMask operator &(BitMask a, BitMask b) {
+        public static BitMask operator &(in BitMask a, in BitMask b) {
+            if (a._isDisposed || b._isDisposed) {
+                throw new ObjectDisposedException(nameof(UnsafeBitMask));
+            }
+            
             int resultLength = Math.Min(a._bits.Length, b._bits.Length);
             BitMask result = new BitMask(resultLength * BitsPerElement);
         
@@ -116,7 +173,11 @@ namespace Sw1f1.Ecs {
             return result;
         }
     
-        public static BitMask operator |(BitMask a, BitMask b) {
+        public static BitMask operator |(in BitMask a, in BitMask b) {
+            if (a._isDisposed || b._isDisposed) {
+                throw new ObjectDisposedException(nameof(UnsafeBitMask));
+            }
+            
             int resultLength = Math.Max(a._bits.Length, b._bits.Length);
             BitMask result = new BitMask(resultLength * BitsPerElement);
             int minLength = Math.Min(a._bits.Length, b._bits.Length);
@@ -145,7 +206,7 @@ namespace Sw1f1.Ecs {
             private int _currentArrayIndex;
             private int _currentBitIndex;
 
-            internal Enumerator (BitMask data) {
+            internal Enumerator (in BitMask data) {
                 _bits = data._bits;
                 _currentArrayIndex = 0;
                 _currentBitIndex = -1;

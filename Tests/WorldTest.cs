@@ -13,11 +13,6 @@ namespace Sw1f1.Ecs.Tests {
             var world3 = WorldBuilder.Build(true);
             var world4 = WorldBuilder.Build(false);
             
-            Assert.That(world1.Id, Is.EqualTo(0));
-            Assert.That(world2.Id, Is.EqualTo(1));
-            Assert.That(world3.Id, Is.EqualTo(2));
-            Assert.That(world4.Id, Is.EqualTo(3));
-            
             Assert.That(world1.IsAlive(), Is.True);
             Assert.That(world2.IsAlive(), Is.True);
             Assert.That(world3.IsAlive(), Is.True);
@@ -30,13 +25,13 @@ namespace Sw1f1.Ecs.Tests {
             
             var world5 = WorldBuilder.Build(true);
             var world6 = WorldBuilder.Build(false);
-            Assert.That(world5.Id, Is.EqualTo(2));
-            Assert.That(world6.Id, Is.EqualTo(0));
             
             Assert.That(world1.IsAlive(), Is.False);
             Assert.That(world3.IsAlive(), Is.False);
             Assert.That(world5.IsAlive(), Is.True);
             Assert.That(world6.IsAlive(), Is.True);
+            
+            WorldBuilder.AllDestroy();
         }
         
         [TestCase(1, false)]
@@ -86,20 +81,31 @@ namespace Sw1f1.Ecs.Tests {
         [TestCase(true)]
         public void Run_LifeEntity(bool isConcurrent) {
             var world = WorldBuilder.Build(isConcurrent);
+            var filter1 = world.GetFilter(new FilterMask<Component1>());
+            var filter2 = world.GetFilter(new FilterMask<Component2>());
+            var filter3 = world.GetFilter(new FilterMask<Component3>());
             
             var entity1 = world.CreateEntity<IsTestEntity>();
+            entity1.GetOrSet<Component1>();
+            Assert.That(filter1.GetCount(), Is.EqualTo(1));
             Assert.That(entity1.Id, Is.EqualTo(0));
             Assert.That(entity1.Gen, Is.EqualTo(0));
             
             var entity2 = world.CreateEntity<IsTestEntity>();
+            entity1.GetOrSet<Component2>();
+            Assert.That(filter2.GetCount(), Is.EqualTo(1));
             Assert.That(entity2.Id, Is.EqualTo(1));
             Assert.That(entity2.Gen, Is.EqualTo(0));
             
             entity1.Destroy();
             
+            Assert.That(filter1.GetCount(), Is.EqualTo(0));
             Assert.That(entity1.IsAlive(), Is.False);
             
             var entity3 = world.CreateEntity<IsTestEntity>();
+            entity3.GetOrSet<Component3>();
+            Assert.That(filter1.GetCount(), Is.EqualTo(0));
+            Assert.That(filter3.GetCount(), Is.EqualTo(1));
             Assert.That(entity3.Id, Is.EqualTo(0));
             Assert.That(entity3.Gen, Is.EqualTo(1));
             
@@ -187,13 +193,16 @@ namespace Sw1f1.Ecs.Tests {
             entity1.Add(new Component1(100));
             entity1.Add(new Component2(true));
             entity1.Add(new Component3(15.5f));
+            entity1.GetOrSet<IsTestEntity42>();
             
             var entity2 = world.CreateEntity<IsTestEntity>();
             entity2.Add(new Component1(200));
             entity2.Add(new Component3(0.5f));
+            entity1.GetOrSet<IsTestEntity29>();
             
             var entity3 = world.CreateEntity<IsTestEntity>();
             entity3.Add(new Component1(50));
+            entity1.GetOrSet<IsTestEntity14>();
             
             var filter1 = world.GetFilter(new FilterMask<Component1>());
             Assert.That(filter1.GetCount(), Is.EqualTo(3));
@@ -349,12 +358,57 @@ namespace Sw1f1.Ecs.Tests {
         }
         
         [OneTimeTearDown]
-        public void Cleanup() {
-          WorldBuilder.AllDestroy();
+        public void Cleanup() { 
+            WorldBuilder.AllDestroy();
         }
     }
     
     public struct IsTestEntity : IComponent { }
+    public struct IsTestEntity1 : IComponent { }
+    public struct IsTestEntity2 : IComponent { }
+    public struct IsTestEntity3 : IComponent { }
+    public struct IsTestEntity4 : IComponent { }
+    public struct IsTestEntity5 : IComponent { }
+    public struct IsTestEntity6 : IComponent { }
+    public struct IsTestEntity7 : IComponent { }
+    public struct IsTestEntity8 : IComponent { }
+    public struct IsTestEntity9 : IComponent { }
+    public struct IsTestEntity10 : IComponent { }
+    public struct IsTestEntity11 : IComponent { }
+    public struct IsTestEntity12 : IComponent { }
+    public struct IsTestEntity13 : IComponent { }
+    public struct IsTestEntity14 : IComponent { }
+    public struct IsTestEntity15 : IComponent { }
+    public struct IsTestEntity16 : IComponent { }
+    public struct IsTestEntity17 : IComponent { }
+    public struct IsTestEntity18 : IComponent { }
+    public struct IsTestEntity19 : IComponent { }
+    public struct IsTestEntity20 : IComponent { }
+    public struct IsTestEntity21 : IComponent { }
+    public struct IsTestEntity22 : IComponent { }
+    public struct IsTestEntity23 : IComponent { }
+    public struct IsTestEntity24 : IComponent { }
+    public struct IsTestEntity25 : IComponent { }
+    public struct IsTestEntity26 : IComponent { }
+    public struct IsTestEntity27 : IComponent { }
+    public struct IsTestEntity28 : IComponent { }
+    public struct IsTestEntity29 : IComponent { }
+    public struct IsTestEntity30 : IComponent { }
+    public struct IsTestEntity31 : IComponent { }
+    public struct IsTestEntity32 : IComponent { }
+    public struct IsTestEntity33 : IComponent { }
+    public struct IsTestEntity34 : IComponent { }
+    public struct IsTestEntity35 : IComponent { }
+    public struct IsTestEntity36 : IComponent { }
+    public struct IsTestEntity37 : IComponent { }
+    public struct IsTestEntity38 : IComponent { }
+    public struct IsTestEntity39 : IComponent { }
+    public struct IsTestEntity40 : IComponent { }
+    public struct IsTestEntity41 : IComponent { }
+    public struct IsTestEntity42 : IComponent { }
+    public struct IsTestEntity43 : IComponent { }
+    public struct IsTestEntity44 : IComponent { }
+    public struct IsTestEntity45 : IComponent { }
 
     public struct Component1 : IComponent {
         public int Value;

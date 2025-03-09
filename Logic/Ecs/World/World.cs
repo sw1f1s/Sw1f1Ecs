@@ -9,12 +9,15 @@ namespace Sw1f1.Ecs {
         public int Id { get; private set; }
         private readonly PoolEntity _entityPool;
         private readonly FilterMap _filterMap;
-        private readonly SparseArray<EntityData> _entities = new (Options.ENTITY_CAPACITY);
-        private readonly SparseArray<AbstractComponentStorage> _components = new (Options.COMPONENT_CAPACITY);
+        private UnsafeSparseArray<EntityData> _entities = new (Options.ENTITY_CAPACITY);
+        private SparseArray<AbstractComponentStorage> _components = new (Options.COMPONENT_CAPACITY);
         private bool _isDestroyed;
         
         bool IWorld.IsAlive => !_isDestroyed;
-        SparseArray<EntityData> IWorld.Entities => _entities;
+#if DEBUG
+        SparseArray<EntityData> IWorld.SafeEntities => _entities.AsSafeArray();
+#endif
+        ref UnsafeSparseArray<EntityData> IWorld.Entities => ref _entities;
         
         public bool IsConcurrent => false;
         
@@ -27,22 +30,22 @@ namespace Sw1f1.Ecs {
 #region Entities
 
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
-        public ref Entity CreateEntity<T>() where T : struct, IComponent {
-            ref var entity = ref CreateEntityInternal();
+        public Entity CreateEntity<T>() where T : struct, IComponent {
+            var entity = CreateEntityInternal();
             entity.Set<T>();
-            return ref entity;
+            return entity;
         }
         
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
-        public ref Entity CopyEntity(Entity entity) {
-            ref var copyEntity = ref CreateEntityInternal();
-            var entityData = _entities.Get(entity.Id);
+        public Entity CopyEntity(Entity entity) {
+            var copyEntity = CreateEntityInternal();
+            ref var entityData = ref _entities.Get(entity.Id);
             foreach (var componentId in entityData.Components) {
                 _components.Get(componentId).CopyComponent(entity, copyEntity);
                 _entities.Get(copyEntity.Id).AddComponent(componentId);
                 _filterMap.UpdateFilters(componentId);
             }
-            return ref copyEntity;
+            return copyEntity;
         }
 
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
@@ -51,18 +54,18 @@ namespace Sw1f1.Ecs {
                 return false;
             }
             
-            var e = _entities.Get(entity.Id);
+            ref var e = ref _entities.Get(entity.Id);
             return e.GetEntity().Gen == entity.Gen;
         }
         
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
         void IWorld.DestroyEntity(Entity entity) {
-            var entityData = _entities.Get(entity.Id);
+            ref var entityData = ref _entities.Get(entity.Id);
             foreach (var componentId in entityData.Components) {
                 _components.Get(componentId).RemoveComponent(entity);
                 _filterMap.UpdateFilters(componentId);
             }
-            _entityPool.Return(entityData);
+            _entityPool.Return(ref entityData);
             _entities.Remove(entity.Id);
         }
 
@@ -98,20 +101,20 @@ namespace Sw1f1.Ecs {
         void IWorld.RemoveComponent<T>(Entity entity) {
             var storage = GetComponentStorage<T>();
             storage.RemoveComponent(entity);
-            var entityData = _entities.Get(entity.Id);
+            ref var entityData = ref _entities.Get(entity.Id);
             entityData.RemoveComponent(storage.Id);
             _filterMap.UpdateFilters(storage.Id);
             if (entityData.IsEmpty) {
-                _entityPool.Return(entityData);
+                _entityPool.Return(ref entityData);
                 _entities.Remove(entity.Id);
             }
         }
         
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
-        private ref Entity CreateEntityInternal() {
+        private Entity CreateEntityInternal() {
             ref var entityData = ref _entityPool.Get();
-            _entities.Add(entityData);
-            return ref entityData.GetEntity();
+            _entities.Add(entityData.Id, entityData);
+            return entityData.GetEntity();
         }
 #endregion
 
@@ -119,7 +122,7 @@ namespace Sw1f1.Ecs {
         private ComponentStorage<T> GetComponentStorage<T>() where T : struct, IComponent {
             int componentId = ComponentStorageIndex<T>.StaticId;
             if (!_components.Has(componentId)) {
-                _components.Add(new ComponentStorage<T>(Options.COMPONENT_ENTITY_CAPACITY));
+                _components.Add(componentId, new ComponentStorage<T>());
             }
             
             return Unsafe.As<ComponentStorage<T>>(_components.Get(componentId));
@@ -158,14 +161,18 @@ namespace Sw1f1.Ecs {
 
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
         void IWorld.Destroy() {
+            if (_isDestroyed) {
+                return;
+            }
+            
             _isDestroyed = true;
+            _filterMap.Dispose();
+            _entityPool.Dispose();
             _entities.Dispose();
             foreach (var component in _components) {
                 component.Dispose();
             }
             _components.Dispose();
-            _filterMap.Dispose();
-            _entityPool.Dispose();
         }
     }   
 }

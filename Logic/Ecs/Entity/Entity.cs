@@ -1,26 +1,30 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 namespace Sw1f1.Ecs {
-    public struct Entity : ISparseItem {
-        public static Entity Empty = new Entity(-1, -1, -1);
+    public struct Entity {
+        public static readonly Entity Empty = new Entity(-1, -1, -1);
         public int Id { get; private set; }
         public int Gen { get; private set; }
         public int WorldId { get; private set; }
-        
-        /// <summary>
-        /// Only read
-        /// </summary>
-        public IReadOnlyList<IComponent> Components => this.GetComponents();
 
+#if DEBUG
+        public IReadOnlyList<IComponent> Components => this.GetComponents();  
+#endif
         internal Entity(int id, int gen, int worldId) {
             Id = id;
             Gen = gen;
             WorldId = worldId;
         }
         
+        [MethodImpl (MethodImplOptions.AggressiveInlining)]
         internal void IncreaseGen() => 
             Gen++;
+        
+        [MethodImpl (MethodImplOptions.AggressiveInlining)]
+        internal void ResetGen() => 
+            Gen = 0;
 
         public override bool Equals(object? obj) {
             return obj is Entity other && Equals(other);

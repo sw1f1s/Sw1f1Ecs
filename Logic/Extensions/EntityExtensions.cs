@@ -97,7 +97,7 @@ namespace Sw1f1.Ecs {
             world.RemoveComponent<T>(entity);
         }
         
-        public static ref Entity Copy(this Entity entity) {
+        public static Entity Copy(this Entity entity) {
             if (!WorldBuilder.AliveWorld(entity.WorldId)) {
                 throw new Exception(string.Format(WORLD_EXCEPTION_DEAD_MESSAGE, entity.WorldId));
             }
@@ -107,7 +107,7 @@ namespace Sw1f1.Ecs {
                 throw new Exception(string.Format(ENTITY_EXCEPTION_DEAD_MESSAGE, entity));
             }
             
-            return ref world.CopyEntity(entity);
+            return world.CopyEntity(entity);
         }
         
         public static void Destroy(this Entity entity) {
@@ -133,7 +133,7 @@ namespace Sw1f1.Ecs {
                 throw new Exception(string.Format(ENTITY_EXCEPTION_DEAD_MESSAGE, entity));
             }
             
-            var entityData = world.Entities.Get(entity.Id);
+            ref var entityData = ref world.Entities.Get(entity.Id);
             var components = new IComponent[entityData.Components.Count];
             int index = 0;
             foreach (var componentId in entityData.Components) {

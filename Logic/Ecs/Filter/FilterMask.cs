@@ -1,5 +1,7 @@
+using System;
+
 namespace Sw1f1.Ecs {
-    public class FilterMask {
+    public class FilterMask : IDisposable {
         protected BitMask _includes;
         protected BitMask _excludes;
         
@@ -8,16 +10,16 @@ namespace Sw1f1.Ecs {
             _excludes = new BitMask(Options.COMPONENT_ENTITY_CAPACITY);
         }
 
-        internal BitMask GetIncludes() {
-            return _includes;
+        internal UnsafeBitMask GetIncludes() {
+            return _includes.AsUnsafe();
         }
         
-        internal BitMask GetExcludes() {
-            return _excludes;
+        internal UnsafeBitMask GetExcludes() {
+            return _excludes.AsUnsafe();
         }
 
         public int GetHashId() {
-            return _includes.GetHashId() ^ _excludes.GetHashId();
+            return _includes.Hash ^ _excludes.Hash;
         }
 
         public static FilterMask Combine(FilterMask mask1, FilterMask mask2) {
@@ -27,6 +29,15 @@ namespace Sw1f1.Ecs {
             mask._excludes = mask1._excludes | mask2._excludes;
             mask._excludes = mask1._excludes | mask2._excludes;
             return mask;
+        }
+
+        ~FilterMask() => 
+            Dispose();
+
+        public void Dispose() {
+            _includes.Dispose();
+            _excludes.Dispose();
+            GC.SuppressFinalize(this);
         }
     }
 

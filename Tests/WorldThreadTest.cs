@@ -117,7 +117,7 @@ namespace Sw1f1.Ecs.Tests {
             }
             
             protected override void ExecuteInternal(Entity entity) {
-                ref var e = ref _world.CreateEntity<IsTestEntity>();
+                var e = _world.CreateEntity<IsTestEntity>();
                 e.Add(new Component2());
             }
         }

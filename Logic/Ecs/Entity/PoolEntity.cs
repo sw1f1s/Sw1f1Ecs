@@ -9,17 +9,23 @@ namespace Sw1f1.Ecs {
 #endif
     internal class PoolEntity : IDisposable {
         private readonly int _worldId;
-        private readonly int _capacity;
         private EntityData[] _freeEntities;
         private int[] _freeIndexes;
         private int _freeEntityCount;
-        
         private bool _isDisposed;
 
         public PoolEntity(int worldId, int capacity) {
             _worldId = worldId;
-            _capacity = capacity;
-            Clear();
+
+            _freeEntities = new EntityData[capacity];
+            _freeIndexes = new int[capacity];
+            _freeEntityCount = 0;
+            
+            for (int i = _freeEntities.Length - 1; i >= 0; i--) {
+                _freeEntities[i] = new EntityData(new Entity(i, -1, _worldId), Options.COMPONENT_ENTITY_CAPACITY);
+                _freeIndexes[_freeEntityCount] = i;
+                _freeEntityCount++;
+            }
         }
 
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
@@ -31,13 +37,14 @@ namespace Sw1f1.Ecs {
             Resize();
             int value = Interlocked.Decrement(ref _freeEntityCount);
             ref var entity = ref _freeEntities[_freeIndexes[value]];
+            entity.ClearComponents();
             entity.IncreaseGen();
             
             return ref entity;
         }
 
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
-        public void Return(EntityData entityData) {
+        public void Return(ref EntityData entityData) {
             if (_isDisposed) {
                 throw new ObjectDisposedException(nameof(PoolEntity));
             }
@@ -53,11 +60,9 @@ namespace Sw1f1.Ecs {
                 throw new ObjectDisposedException(nameof(PoolEntity));
             }
             
-            _freeEntities = new EntityData[_capacity];
-            _freeIndexes = new int[_capacity];
             _freeEntityCount = 0;
             for (int i = _freeEntities.Length - 1; i >= 0; i--) {
-                _freeEntities[i] = new EntityData(new Entity(i, -1, _worldId), Options.COMPONENT_ENTITY_CAPACITY);
+                _freeEntities[i].Clear();
                 _freeIndexes[_freeEntityCount] = i;
                 _freeEntityCount++;
             }
@@ -81,7 +86,15 @@ namespace Sw1f1.Ecs {
         }
 
         public void Dispose() {
+            if (_isDisposed) {
+                return;
+            }
+            
             _isDisposed = true;
+            for (int i = 0; i < _freeEntities.Length; i++) {
+                _freeEntities[i].Dispose();
+            }
+
             _freeEntities = null;
             _freeIndexes = null;
             _freeEntityCount = 0;

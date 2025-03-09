@@ -1,13 +1,16 @@
 namespace Sw1f1.Ecs {
-    public interface IWorld : ISparseItem, IConcurrentSupport {
+    public interface IWorld : IConcurrentSupport {
         int Id { get; }
         internal bool IsAlive { get; }
-        internal SparseArray<EntityData> Entities { get; }
+#if DEBUG
+        internal SparseArray<EntityData> SafeEntities { get; }
+#endif
+        internal ref UnsafeSparseArray<EntityData> Entities { get; }
         
-        ref Entity CreateEntity<T>() where T : struct, IComponent;
+        Entity CreateEntity<T>() where T : struct, IComponent;
         internal bool EntityIsAlive(Entity entity);
         internal void DestroyEntity(Entity entity);
-        ref Entity CopyEntity(Entity entity);
+        Entity CopyEntity(Entity entity);
 
         internal void AddComponent<T>(Entity entity, ref T component) where T : struct, IComponent;
         internal bool HasComponent<T>(Entity entity) where T : struct, IComponent;

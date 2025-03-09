@@ -3,41 +3,40 @@ using System.Runtime.CompilerServices;
 
 namespace Sw1f1.Ecs {
     public static class WorldBuilder {
-        private static readonly SparseArray<IWorld> Worlds = new(Options.WORLD_CAPACITY);
+        private static SparseArray<IWorld> _worlds = new(Options.WORLD_CAPACITY);
         private static uint[] _freeIndexes = new uint[2] { 1, 0 };
         private static uint _freeIndexesCount = 2;
         
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
         public static IWorld Build(bool isConcurrent = false) {
             var world = CreateWorld(isConcurrent);
-            Worlds.Add(world);
+            _worlds.Add(world.Id, world);
             return world;
         }
 
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
         public static void AllDestroy() {
-            foreach (var world in Worlds) {
+            foreach (var world in _worlds) {
                 world.Destroy();
             }
-            Worlds.Clear();
+            _worlds.Clear();
         }
 
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
         public static IWorld GetWorld(int worldId) {
-            return Worlds.Get(worldId);
+            return _worlds.Get(worldId);
         }
         
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
         public static bool AliveWorld(int worldId) {
-            return Worlds.Has(worldId);
+            return _worlds.Has(worldId);
         }
 
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
         public static void Destroy(IWorld world) {
-            if (Worlds.Remove(world.Id)) {
-                _freeIndexes[_freeIndexesCount++] = (uint)world.Id;
-                world.Destroy();
-            }
+            _worlds.Remove(world.Id);
+            _freeIndexes[_freeIndexesCount++] = (uint)world.Id;
+            world.Destroy();
         }
 
         [MethodImpl (MethodImplOptions.AggressiveInlining)]

@@ -7,20 +7,19 @@ namespace Sw1f1.Ecs {
     [Il2CppSetOption (Option.ArrayBoundsChecks, false)]
 #endif
     internal sealed class ComponentStorage<T> : AbstractComponentStorage where T : struct, IComponent {
-        private readonly AutoResetHandler<T> _autoResetHandler;
-        private readonly AutoCopyHandler<T> _autoCopyHandler;
         private readonly T _defaultInstance = default;
-        private SparseSet<EntityID> _components;
-        private T[] _componentData;
+        private AutoResetHandler<T> _autoResetHandler;
+        private AutoCopyHandler<T> _autoCopyHandler;
+        private SparseArray<T> _components;
         private bool _isDisposed;
         
         public override bool IsConcurrent => false;
 
+        public override Type ComponentType => typeof(T);
         public override int Id => ComponentStorageIndex<T>.StaticId;
 
-        internal ComponentStorage(int capacity) {
-            _components = new SparseSet<EntityID>(Options.ENTITY_CAPACITY);
-            _componentData = new T[capacity];
+        internal ComponentStorage() {
+            _components = new SparseArray<T>(Options.ENTITY_CAPACITY);
 
             if (TryGetInterface(ref _defaultInstance, out IAutoCopyComponent<T> autoCopy)) {
                 _autoCopyHandler = autoCopy.Copy;
@@ -96,12 +95,6 @@ namespace Sw1f1.Ecs {
                 throw new Exception($"{entity} not contains {typeof(T).Name}");
             }
             
-            int index = _components.GetSparseIndex(entity.Id);
-            int lastIndex = _components.Count - 1;
-            if (lastIndex > index) {
-                _componentData[index] = _componentData[lastIndex];
-            }
-            
             _components.Remove(entity.Id);
         }
         
@@ -124,10 +117,7 @@ namespace Sw1f1.Ecs {
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void AddComponentInternal(Entity entity, T component) {
-            _components.Add(new EntityID(entity.Id));
-            int index = _components.GetSparseIndex(entity.Id);
-            TryResize(index);
-            _componentData[index] = component;
+            _components.Add(entity.Id, component);
         }
         
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
@@ -137,8 +127,7 @@ namespace Sw1f1.Ecs {
 
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
         private ref T GetComponentInternal(Entity entity) {
-            int index = _components.GetSparseIndex(entity.Id);
-            return ref _componentData[index];
+            return ref _components.Get(entity.Id);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -146,23 +135,16 @@ namespace Sw1f1.Ecs {
             _components.Clear();
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void TryResize(int id) {
-            while (id >= _componentData.Length) {
-                Resize();
-            }
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void Resize() {
-            Array.Resize(ref _componentData, _componentData.Length * 2);
-        }
-
         public override void Dispose() {
+            if (_isDisposed) {
+                return;
+            }
+            
             _isDisposed = true;
-            _componentData = new T[_componentData.Length];
+            _autoResetHandler = null;
+            _autoCopyHandler = null;
             _components.Dispose();
-            _components.Dispose();
+            _components = default;
         }
     }   
 }

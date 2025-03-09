@@ -16,13 +16,11 @@ namespace Sw1f1.Ecs {
             }
         }
         
-        private void ExecuteParallel(Filter filter) {
+        private unsafe void ExecuteParallel(Filter filter) {
             filter.Update();
-            filter.Cache.Lock();
             Parallel.For(0, filter.Cache.Count, i => {
-                ExecuteInternal(filter.Cache.DenseItems[i]);
+                ExecuteInternal(filter.Cache.DenseItems[i].Value);
             });
-            filter.Cache.Unlock();
         }
 
         protected abstract void ExecuteInternal(Entity entity);
