@@ -84,8 +84,9 @@ namespace Sw1f1.Ecs {
                 const int prime = 16777619;
                 int hash = (int)2166136261;
 
-                foreach (uint bit in _bits) {
-                    hash ^= (int)bit;
+                for (int i = 0; i < _bits.Length; i++) {
+                    int combined = i * 397 ^ (int)_bits[i];
+                    hash ^= combined;
                     hash *= prime;
                 }
 
