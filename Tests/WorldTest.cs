@@ -347,6 +347,37 @@ namespace Sw1f1.Ecs.Tests {
                 entity2.Has<Component1>();
             });
         }
+
+        [Test]
+        public void Run_SparseArray() {
+            var world = WorldBuilder.Build();
+            var array = new SparseArray<Entity>(2);
+            var entity1 = world.CreateEntity<IsTestEntity>();
+            var entity2 = world.CreateEntity<IsTestEntity>();
+            var entity3 = world.CreateEntity<IsTestEntity>();
+            var entity4 = world.CreateEntity<IsTestEntity>();
+            var entity5 = world.CreateEntity<IsTestEntity>();
+            
+            array.Add(entity1);
+            array.Add(entity2);
+            array.Add(entity3);
+            array.Add(entity4);
+            array.Add(entity5);
+            
+            Assert.That(array.Has(entity1.Id), Is.True);
+            Assert.That(array.Has(entity2.Id), Is.True);
+            Assert.That(array.Has(entity3.Id), Is.True);
+            Assert.That(array.Has(entity4.Id), Is.True);
+            Assert.That(array.Has(entity5.Id), Is.True);
+            
+            array.Clear();
+            Assert.That(array.Count, Is.EqualTo(0));
+            Assert.That(array.Has(entity1.Id), Is.False);
+            Assert.That(array.Has(entity2.Id), Is.False);
+            Assert.That(array.Has(entity3.Id), Is.False);
+            Assert.That(array.Has(entity4.Id), Is.False);
+            Assert.That(array.Has(entity5.Id), Is.False);
+        }
         
         [OneTimeTearDown]
         public void Cleanup() {

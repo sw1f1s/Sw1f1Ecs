@@ -59,7 +59,7 @@ namespace Sw1f1.Ecs {
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
         public void Clear() {
             for (int i = 0; i < _denseItemsCount; i++) {
-                int sparseIndex = _denseItems[i].Id + 1;
+                int sparseIndex = _denseItems[i].Id;
                 _sparseItems[sparseIndex] = 0;
             }
             _denseItemsCount = 0;
