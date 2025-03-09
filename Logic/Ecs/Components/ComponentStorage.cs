@@ -16,6 +16,7 @@ namespace Sw1f1.Ecs {
         
         public override bool IsConcurrent => false;
 
+        public override Type ComponentType => typeof(T);
         public override int Id => ComponentStorageIndex<T>.StaticId;
 
         internal ComponentStorage(int capacity) {
