@@ -17,7 +17,7 @@ namespace Sw1f1.Ecs {
         }
 
         public int GetHashId() {
-            return _includes.GetHashId() ^ _excludes.GetHashId();
+            return _includes.Hash ^ _excludes.Hash;
         }
 
         public static FilterMask Combine(FilterMask mask1, FilterMask mask2) {

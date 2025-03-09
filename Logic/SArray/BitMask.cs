@@ -12,6 +12,7 @@ namespace Sw1f1.Ecs {
         private uint _count;
         
         public uint Count => _count;
+        public int Hash => GetHashId();
         
         public BitMask(int capacity) {
             int arraySize = (capacity + BitsPerElement - 1) / BitsPerElement;
@@ -79,7 +80,8 @@ namespace Sw1f1.Ecs {
             return new Enumerator(this);
         }
 
-        public int GetHashId() {
+        [MethodImpl (MethodImplOptions.AggressiveInlining)]
+        private int GetHashId() {
             unchecked {
                 const int prime = 16777619;
                 int hash = (int)2166136261;
