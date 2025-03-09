@@ -1,3 +1,6 @@
+using System;
+using System.Collections.Generic;
+
 namespace Sw1f1.Ecs {
     public static class WorldExtensions {
         public static void Destroy(this IWorld world) {
