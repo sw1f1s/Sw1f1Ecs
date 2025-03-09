@@ -55,11 +55,9 @@ namespace Sw1f1.Ecs {
         
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
         public bool HasAllCollision(BitMask other) {
-            if (_bits.Length < other._bits.Length)
-                return false;
-            
             for (int i = 0; i < other._bits.Length; i++) {
-                if ((_bits[i] & other._bits[i]) != other._bits[i]) {
+                uint bit = i >= _bits.Length ? 0 : _bits[i];
+                if ((bit & other._bits[i]) != other._bits[i]) {
                     return false;
                 }
             }
