@@ -20,6 +20,14 @@ namespace Sw1f1.Ecs {
             _denseItemsCount = 0;
         }
         
+        public SparseSet(SparseSet<T> copy) { 
+            _denseItems = new T[copy._denseItems.Length];
+            _sparseItems = new uint[copy._sparseItems.Length];
+            _denseItemsCount = copy._denseItemsCount;
+            Array.Copy(copy._denseItems, _denseItems, copy._denseItems.Length);
+            Array.Copy(copy._sparseItems, _sparseItems, copy._sparseItems.Length);
+        }
+        
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
         public void Add(T item) {
             TryResize(item.Id);

@@ -22,8 +22,8 @@ namespace Sw1f1.Ecs {
         }
         
         public SparseArray(SparseArray<T> copy) {
-            _data = copy._data;
-            _delayedOps = copy._delayedOps;
+            _data = new SparseSet<T>(copy._data);
+            _delayedOps = new SparseSet<DelayedOperation<T>>(copy._delayedOps);
             _lock = copy._lock;
         }
         

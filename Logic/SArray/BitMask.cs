@@ -96,10 +96,7 @@ namespace Sw1f1.Ecs {
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
         private void TryResize(int minCapacity) {
             if (_bits.Length < minCapacity) {
-                int newCapacity = Math.Max(_bits.Length * 2, minCapacity);
-                uint[] newBits = new uint[newCapacity];
-                Array.Copy(_bits, newBits, _bits.Length);
-                _bits = newBits;
+                Array.Resize(ref _bits, _bits.Length * 2);
             }
         }
 
