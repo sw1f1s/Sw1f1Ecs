@@ -80,18 +80,14 @@ namespace Sw1f1.Ecs {
         }
 
         public int GetHashId() {
-            unchecked {
-                const int prime = 16777619;
-                int hash = (int)2166136261;
-
-                for (int i = 0; i < _bits.Length; i++) {
-                    int combined = i * 397 ^ (int)_bits[i];
-                    hash ^= combined;
-                    hash *= prime;
-                }
-
-                return hash;
+            long hash = 0;
+            for (int i = 0; i < _bits.Length; i++) {
+                long position = ((long)i) << 32;
+                long value = _bits[i];
+                hash += position | value;
             }
+            
+            return (int)(hash ^ (hash >> 32));
         }
 
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
