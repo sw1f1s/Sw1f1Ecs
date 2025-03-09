@@ -28,7 +28,7 @@ namespace Sw1f1.Ecs {
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
         public void Set(int id) {
             var (arrayIndex, bitIndex) = GetIndices(id);
-            TryResize(arrayIndex + 1);
+            TryResize(arrayIndex);
             _bits[arrayIndex] |= 1u << bitIndex;
             _count++;
         }
@@ -95,7 +95,7 @@ namespace Sw1f1.Ecs {
 
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
         private void TryResize(int minCapacity) {
-            if (_bits.Length < minCapacity) {
+            while (_bits.Length <= minCapacity) {
                 Array.Resize(ref _bits, _bits.Length * 2);
             }
         }
