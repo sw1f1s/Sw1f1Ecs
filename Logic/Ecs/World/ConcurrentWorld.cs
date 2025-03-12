@@ -8,25 +8,24 @@ namespace Sw1f1.Ecs {
 #endif
     public sealed class ConcurrentWorld : IWorld {
         public int Id { get; private set; }
-        private readonly PoolEntity _entityPool;
+        private readonly EntityStorage _entityStorage;
         private readonly FilterMap _filterMap;
         private readonly ReaderWriterLockSlim _accessLock = new(LockRecursionPolicy.SupportsRecursion);
-        private UnsafeSparseArray<EntityData> _entities = new (Options.ENTITY_CAPACITY);
         private SparseArray<AbstractComponentStorage> _components = new (Options.COMPONENT_CAPACITY);
-        private bool _isDestroyed;
+        private bool _isDisposed;
         
-        bool IWorld.IsAlive => !_isDestroyed;
+        bool IWorld.IsAlive => !_isDisposed;
 #if DEBUG
-        SparseArray<EntityData> IWorld.SafeEntities => _entities.AsSafeArray();
+        SparseArray<EntityData> IWorld.SafeEntities => _entityStorage.Entities.AsSafeArray();
 #endif
 
-        ref UnsafeSparseArray<EntityData> IWorld.Entities => ref _entities;
+        ref UnsafeSparseArray<EntityData> IWorld.Entities => ref _entityStorage.Entities;
         
         public bool IsConcurrent => true;
         
         internal ConcurrentWorld(int id) {
             Id = id;
-            _entityPool = new PoolEntity(id, Options.ENTITY_CAPACITY);
+            _entityStorage = new EntityStorage(id, Options.ENTITY_CAPACITY);
             _filterMap = new FilterMap(this);
         }
         
@@ -42,10 +41,10 @@ namespace Sw1f1.Ecs {
             var copyEntity = CreateEntityInternal();
             _accessLock.EnterWriteLock();
             try {
-                ref var entityData = ref _entities.Get(entity.Id);
+                ref var entityData = ref _entityStorage.Get(entity);
                 foreach (var componentId in entityData.Components) {
                     _components.Get(componentId).CopyComponent(entity, copyEntity);
-                    _entities.Get(copyEntity.Id).AddComponent(componentId);
+                    _entityStorage.Get(copyEntity).AddComponent(componentId);
                     _filterMap.UpdateFilters(componentId);
                 }
                 return copyEntity;
@@ -57,11 +56,11 @@ namespace Sw1f1.Ecs {
         bool IWorld.EntityIsAlive(Entity entity) {
             _accessLock.EnterReadLock();
             try {
-                if (!_entities.Has(entity.Id)) {
+                if (!_entityStorage.Has(entity)) {
                     return false;
                 }
             
-                ref var e = ref _entities.Get(entity.Id);
+                ref var e = ref _entityStorage.Get(entity);
                 return e.GetEntity().Gen == entity.Gen;
             }finally {
                 _accessLock.ExitReadLock();
@@ -71,13 +70,12 @@ namespace Sw1f1.Ecs {
         void IWorld.DestroyEntity(Entity entity) {
             _accessLock.EnterWriteLock();
             try {
-                ref var entityData = ref _entities.Get(entity.Id);
+                ref var entityData = ref _entityStorage.Get(entity);
                 foreach (var componentId in entityData.Components) {
                     _components.Get(componentId).RemoveComponent(entity);
                     _filterMap.UpdateFilters(componentId);
                 }
-                _entityPool.Return(ref entityData);
-                _entities.Remove(entity.Id);
+                _entityStorage.Return(entityData);
             }finally {
                 _accessLock.ExitWriteLock();
             }
@@ -88,7 +86,7 @@ namespace Sw1f1.Ecs {
             try {
                 var storage = GetComponentStorage<T>();
                 storage.AddComponent(entity, ref component);
-                _entities.Get(entity.Id).AddComponent(storage.Id);
+                _entityStorage.Get(entity).AddComponent(storage.Id);
                 _filterMap.UpdateFilters(storage.Id);
             }finally {
                 _accessLock.ExitWriteLock();
@@ -119,7 +117,7 @@ namespace Sw1f1.Ecs {
             _accessLock.EnterWriteLock();
             try {
                 var storage = GetComponentStorage<T>();
-                _entities.Get(entity.Id).AddComponent(storage.Id);
+                _entityStorage.Get(entity).AddComponent(storage.Id);
                 _filterMap.UpdateFilters(storage.Id);
                 return ref storage.SetComponent(entity);
             }finally {
@@ -132,12 +130,11 @@ namespace Sw1f1.Ecs {
             try {
                 var storage = GetComponentStorage<T>();
                 storage.RemoveComponent(entity);
-                ref var entityData = ref _entities.Get(entity.Id);
+                ref var entityData = ref _entityStorage.Get(entity);
                 entityData.RemoveComponent(storage.Id);
                 _filterMap.UpdateFilters(storage.Id);
                 if (entityData.IsEmpty) {
-                    _entityPool.Return(ref entityData);
-                    _entities.Remove(entity.Id);
+                    _entityStorage.Return(entityData);
                 }
             }finally {
                 _accessLock.ExitWriteLock();
@@ -147,8 +144,7 @@ namespace Sw1f1.Ecs {
         private Entity CreateEntityInternal() {
             _accessLock.EnterWriteLock();
             try {
-                ref var entityData = ref _entityPool.Get();
-                _entities.Add(entityData.Id, entityData);
+                ref var entityData = ref _entityStorage.GetFreeEntity();
                 return entityData.GetEntity();
             }finally {
                 _accessLock.ExitWriteLock();
@@ -189,24 +185,24 @@ namespace Sw1f1.Ecs {
 
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
         public void Clear() {
-            _entities.Clear();
             _filterMap.Clear();
             foreach (var component in _components) {
                 component.Clear();
             }
-            _entityPool.Clear();
+            _entityStorage.Clear();
         }
+        
+        ~ConcurrentWorld() => 
+            Dispose();
 
-        [MethodImpl (MethodImplOptions.AggressiveInlining)]
-        void IWorld.Destroy() {
-            if (_isDestroyed) {
+        public void Dispose() {
+            if (_isDisposed) {
                 return;
             }
             
-            _isDestroyed = true;
+            _isDisposed = true;
             _filterMap.Dispose();
-            _entityPool.Dispose();
-            _entities.Dispose();
+            _entityStorage.Dispose();
             foreach (var component in _components) {
                 component.Dispose();
             }

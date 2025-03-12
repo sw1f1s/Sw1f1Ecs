@@ -36,7 +36,6 @@ namespace Sw1f1.Ecs {
         public static void Destroy(IWorld world) {
             _worlds.Remove(world.Id);
             _freeIndexes[_freeIndexesCount++] = (uint)world.Id;
-            world.Destroy();
         }
 
         [MethodImpl (MethodImplOptions.AggressiveInlining)]

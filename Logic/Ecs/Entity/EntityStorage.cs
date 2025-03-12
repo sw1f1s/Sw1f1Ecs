@@ -1,0 +1,109 @@
+using System;
+using System.Runtime.CompilerServices;
+using System.Threading;
+
+namespace Sw1f1.Ecs {
+#if ENABLE_IL2CPP
+    [Il2CppSetOption (Option.NullChecks, false)]
+    [Il2CppSetOption (Option.ArrayBoundsChecks, false)]
+#endif
+    internal class EntityStorage : IDisposable {
+        private readonly int _worldId;
+        private UnsafeSparseArray<EntityData> _entities;
+        private UnsafeSparseArray<EntityData> _pool;
+        private bool _isDisposed;
+        public ref UnsafeSparseArray<EntityData> Entities => ref _entities;
+        
+        public EntityStorage(int worldId, uint capacity) {
+            _worldId = worldId;
+            _entities = new UnsafeSparseArray<EntityData>(capacity);
+            _pool = new UnsafeSparseArray<EntityData>(capacity);
+            for (int i = (int)_pool.Length - 1; i >= 0; i--) {
+                var data = new EntityData(new Entity(i, -1, _worldId), Options.COMPONENT_ENTITY_CAPACITY);
+                _pool.Add(i, data);
+            }
+        }
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool Has(Entity entity) {
+            return _entities.Has(entity.Id);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public ref EntityData Get(Entity entity) {
+            return ref _entities.Get(entity.Id);
+        }
+
+        [MethodImpl (MethodImplOptions.AggressiveInlining)]
+        public ref EntityData GetFreeEntity() {
+            if (_isDisposed) {
+                throw new ObjectDisposedException(nameof(EntityStorage));
+            }
+
+            TryIncreasePool();
+            var entity = _pool.GetLast();
+            entity.IncreaseGen();
+            _pool.Remove(entity.Id);
+            _entities.Add(entity.Id, entity);
+            return ref _entities.Get(entity.Id);
+        }
+
+        [MethodImpl (MethodImplOptions.AggressiveInlining)]
+        public void Return(EntityData entity) {
+            if (_isDisposed) {
+                throw new ObjectDisposedException(nameof(EntityStorage));
+            }
+            entity.ClearComponents();
+            _entities.Remove(entity.Id);
+            _pool.Add(entity.Id, entity);
+        }
+
+        [MethodImpl (MethodImplOptions.AggressiveInlining)]
+        public void Clear() {
+            if (_isDisposed) {
+                throw new ObjectDisposedException(nameof(EntityStorage));
+            }
+
+            foreach (ref var entity in _entities) {
+                _pool.Add(entity.Id, entity);
+            }
+            _entities.Clear();
+            foreach (ref var entity in _pool) {
+                entity.Clear();
+            }
+        }
+
+        [MethodImpl (MethodImplOptions.AggressiveInlining)]
+        private void TryIncreasePool() {
+            if (_pool.Count > 0) {
+                return;
+            }
+
+            int length = (int)_pool.Length;
+            int newLength = length * 2 - 1;
+            for (int i = newLength; i >= length; i--) {
+                var data = new EntityData(new Entity(i, -1, _worldId), Options.COMPONENT_ENTITY_CAPACITY);
+                _pool.Add(i, data);
+            }
+        }
+
+        public void Dispose() {
+            if (_isDisposed) {
+                return;
+            }
+            
+            _isDisposed = true;
+            foreach (ref var entity in _entities) {
+                entity.Dispose();
+            }
+            
+            foreach (ref var entity in _pool) {
+                entity.Dispose();
+            }
+            _entities.Dispose();
+            _pool.Dispose();
+            _entities = default;
+            _pool = default;
+        }
+    }   
+}

@@ -7,23 +7,22 @@ namespace Sw1f1.Ecs {
 #endif
     public sealed class World : IWorld {
         public int Id { get; private set; }
-        private readonly PoolEntity _entityPool;
+        private readonly EntityStorage _entityStorage;
         private readonly FilterMap _filterMap;
-        private UnsafeSparseArray<EntityData> _entities = new (Options.ENTITY_CAPACITY);
         private SparseArray<AbstractComponentStorage> _components = new (Options.COMPONENT_CAPACITY);
-        private bool _isDestroyed;
+        private bool _isDisposed;
         
-        bool IWorld.IsAlive => !_isDestroyed;
+        bool IWorld.IsAlive => !_isDisposed;
 #if DEBUG
-        SparseArray<EntityData> IWorld.SafeEntities => _entities.AsSafeArray();
+        SparseArray<EntityData> IWorld.SafeEntities => _entityStorage.Entities.AsSafeArray();
 #endif
-        ref UnsafeSparseArray<EntityData> IWorld.Entities => ref _entities;
+        ref UnsafeSparseArray<EntityData> IWorld.Entities => ref _entityStorage.Entities;
         
         public bool IsConcurrent => false;
         
         internal World(int id) {
             Id = id;
-            _entityPool = new PoolEntity(id, Options.ENTITY_CAPACITY);
+            _entityStorage = new EntityStorage(id, Options.ENTITY_CAPACITY);
             _filterMap = new FilterMap(this);
         }
         
@@ -39,10 +38,10 @@ namespace Sw1f1.Ecs {
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
         public Entity CopyEntity(Entity entity) {
             var copyEntity = CreateEntityInternal();
-            ref var entityData = ref _entities.Get(entity.Id);
+            ref var entityData = ref _entityStorage.Get(entity);
             foreach (var componentId in entityData.Components) {
                 _components.Get(componentId).CopyComponent(entity, copyEntity);
-                _entities.Get(copyEntity.Id).AddComponent(componentId);
+                _entityStorage.Get(copyEntity).AddComponent(componentId);
                 _filterMap.UpdateFilters(componentId);
             }
             return copyEntity;
@@ -50,30 +49,29 @@ namespace Sw1f1.Ecs {
 
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
         bool IWorld.EntityIsAlive(Entity entity) {
-            if (!_entities.Has(entity.Id)) {
+            if (!_entityStorage.Has(entity)) {
                 return false;
             }
             
-            ref var e = ref _entities.Get(entity.Id);
-            return e.GetEntity().Gen == entity.Gen;
+            ref var entityData = ref _entityStorage.Get(entity);
+            return entityData.GetEntity().Gen == entity.Gen;
         }
         
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
         void IWorld.DestroyEntity(Entity entity) {
-            ref var entityData = ref _entities.Get(entity.Id);
+            var entityData = _entityStorage.Get(entity);
             foreach (var componentId in entityData.Components) {
                 _components.Get(componentId).RemoveComponent(entity);
                 _filterMap.UpdateFilters(componentId);
             }
-            _entityPool.Return(ref entityData);
-            _entities.Remove(entity.Id);
+            _entityStorage.Return(entityData);
         }
 
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
         void IWorld.AddComponent<T>(Entity entity, ref T component) {
             var storage = GetComponentStorage<T>();
             storage.AddComponent(entity, ref component);
-            _entities.Get(entity.Id).AddComponent(storage.Id);
+            _entityStorage.Get(entity).AddComponent(storage.Id);
             _filterMap.UpdateFilters(storage.Id);
         }
         
@@ -92,7 +90,7 @@ namespace Sw1f1.Ecs {
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
         ref T IWorld.SetComponent<T>(Entity entity) {
             var storage = GetComponentStorage<T>();
-            _entities.Get(entity.Id).AddComponent(storage.Id);
+            _entityStorage.Get(entity).AddComponent(storage.Id);
             _filterMap.UpdateFilters(storage.Id);
             return ref storage.SetComponent(entity);
         }
@@ -101,19 +99,17 @@ namespace Sw1f1.Ecs {
         void IWorld.RemoveComponent<T>(Entity entity) {
             var storage = GetComponentStorage<T>();
             storage.RemoveComponent(entity);
-            ref var entityData = ref _entities.Get(entity.Id);
+            ref var entityData = ref _entityStorage.Get(entity);
             entityData.RemoveComponent(storage.Id);
             _filterMap.UpdateFilters(storage.Id);
             if (entityData.IsEmpty) {
-                _entityPool.Return(ref entityData);
-                _entities.Remove(entity.Id);
+                _entityStorage.Return(entityData);
             }
         }
         
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
         private Entity CreateEntityInternal() {
-            ref var entityData = ref _entityPool.Get();
-            _entities.Add(entityData.Id, entityData);
+            ref var entityData = ref _entityStorage.GetFreeEntity();
             return entityData.GetEntity();
         }
 #endregion
@@ -151,24 +147,25 @@ namespace Sw1f1.Ecs {
 
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
         public void Clear() {
-            _entities.Clear();
             _filterMap.Clear();
             foreach (var component in _components) {
                 component.Clear();
             }
-            _entityPool.Clear();
+            _entityStorage.Clear();
         }
 
-        [MethodImpl (MethodImplOptions.AggressiveInlining)]
-        void IWorld.Destroy() {
-            if (_isDestroyed) {
+        ~World() => 
+            Dispose();
+
+        public void Dispose() {
+            if (_isDisposed) {
                 return;
             }
             
-            _isDestroyed = true;
+            WorldBuilder.Destroy(this);
+            _isDisposed = true;
             _filterMap.Dispose();
-            _entityPool.Dispose();
-            _entities.Dispose();
+            _entityStorage.Dispose();
             foreach (var component in _components) {
                 component.Dispose();
             }

@@ -1,5 +1,7 @@
+using System;
+
 namespace Sw1f1.Ecs {
-    public interface IWorld : IConcurrentSupport {
+    public interface IWorld : IConcurrentSupport, IDisposable {
         int Id { get; }
         internal bool IsAlive { get; }
 #if DEBUG
@@ -24,6 +26,5 @@ namespace Sw1f1.Ecs {
         Filter GetFilter(FilterMask mask);
         internal void UpdateFilters();
         void Clear();
-        internal void Destroy();
     }   
 }

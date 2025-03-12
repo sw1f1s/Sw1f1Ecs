@@ -63,7 +63,7 @@ namespace Sw1f1.Ecs.Tests {
             Assert.That(filter1.GetCount(), Is.EqualTo(0));
             Assert.That(filter3.GetCount(), Is.EqualTo(count));
             
-            foreach (var filter in filter2) {
+            foreach (var e in filter2) {
                 var entity = world.CreateEntity<IsTestEntity>();
                 entity.Add(new Component1());
                 entity.Add(new Component2());

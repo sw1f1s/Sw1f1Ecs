@@ -15,6 +15,7 @@ namespace Sw1f1.Ecs {
         private bool _isDisposed;
         
         internal Entry* DenseItems => _denseItems;
+        public uint Length => _length;
         public uint Count => _denseItemsCount;
         
         public UnsafeSparseArray(uint capacity) {
@@ -88,6 +89,32 @@ namespace Sw1f1.Ecs {
             
             uint denseIndex = _sparseItems[id] - 1;
             return ref _denseItems[denseIndex].Value;
+        }
+        
+        [MethodImpl (MethodImplOptions.AggressiveInlining)]
+        public ref T GetFirst() {
+            if (_isDisposed) {
+                throw new ObjectDisposedException(nameof(UnsafeSparseArray<T>));
+            }
+
+            if (_denseItemsCount == 0) {
+                throw new IndexOutOfRangeException();
+            }
+            
+            return ref _denseItems[0].Value;
+        }
+        
+        [MethodImpl (MethodImplOptions.AggressiveInlining)]
+        public ref T GetLast() {
+            if (_isDisposed) {
+                throw new ObjectDisposedException(nameof(UnsafeSparseArray<T>));
+            }
+
+            if (_denseItemsCount == 0) {
+                throw new IndexOutOfRangeException();
+            }
+            
+            return ref _denseItems[_denseItemsCount - 1].Value;
         }
         
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
