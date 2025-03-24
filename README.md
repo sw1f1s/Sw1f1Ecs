@@ -15,11 +15,6 @@ Create world
 ```c#
 IWorld world1 = WorldBuilder.Build();
 ```
-Or you can request a world running in multithreading
-```c#
-IWorld world2 = WorldBuilder.Build(true);
-IWorld world2 = WorldBuilder.Build(false);
-```
 Destroy world
 ```c#
 world.Destroy();
@@ -110,6 +105,7 @@ foreach (Entity entity in filter1) {
 ```
 
 Multithreaded filter for working with entities in different threads
+FilterThreadJob not support - set component, clone entity and create entity
 ```c#
 private class Component1FilterThreadJob : FilterThreadJob {
     protected override void ExecuteInternal(Entity entity) {
