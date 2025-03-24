@@ -12,8 +12,6 @@ namespace Sw1f1.Ecs {
         private AutoCopyHandler<T> _autoCopyHandler;
         private SparseArray<T> _components;
         private bool _isDisposed;
-        
-        public override bool IsConcurrent => false;
 
         public override Type ComponentType => typeof(T);
         public override int Id => ComponentStorageIndex<T>.StaticId;

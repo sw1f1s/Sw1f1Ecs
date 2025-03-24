@@ -7,25 +7,23 @@ namespace Sw1f1.Ecs {
     [Il2CppSetOption (Option.NullChecks, false)]
     [Il2CppSetOption (Option.ArrayBoundsChecks, false)]
 #endif
-    public sealed class Filter : IDisposable, IConcurrentSupport {
+    public sealed class Filter : IDisposable {
         private IWorld _world;
-        private UnsafeSparseArray<Entity> _cache = new(Options.ENTITY_CAPACITY);
+        private SparseArray<Entity> _cache = new(Options.ENTITY_CAPACITY);
         
-        private UnsafeBitMask _includes;
-        private UnsafeBitMask _excludes;
+        private BitMask _includes;
+        private BitMask _excludes;
         
         private bool _needUpdate;
         private bool _isDisposed;
         
-        internal UnsafeSparseArray<Entity> Cache => _cache;
-        public bool IsConcurrent => _world.IsConcurrent;
-        public UnsafeBitMask Includes => _includes;
-        public UnsafeBitMask Excludes => _excludes;
+        internal SparseArray<Entity> Cache => _cache;
+        public BitMask Includes => _includes;
+        public BitMask Excludes => _excludes;
+        
+        internal IWorld World => _world;
         
 #if DEBUG
-        internal SparseArray<Entity> SafeCache => _cache.AsSafeArray();
-        internal BitMask SafeIncludes => _includes.AsSafe();
-        internal BitMask SafeExcludes => _excludes.AsSafe();
         internal IReadOnlyList<Type> TypeIncludes => _world.GetTypeComponents(_includes);
         internal IReadOnlyList<Type> TypeExcludes => _world.GetTypeComponents(_excludes);
 #endif
@@ -125,7 +123,7 @@ namespace Sw1f1.Ecs {
         }
         
         public struct Enumerator : IDisposable {
-            private UnsafeSparseArray<Entity>.Enumerator<Entity> _cache;
+            private SparseArray<Entity>.Enumerator<Entity> _cache;
 
             internal Enumerator (Filter filter) {
                 _cache = filter._cache.GetEnumerator();

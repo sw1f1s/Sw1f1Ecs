@@ -15,19 +15,6 @@ namespace Sw1f1.Ecs {
             return world.EntityIsAlive(entity);
         }
         
-        public static void Add<T>(this Entity entity, T component) where T : struct, IComponent {
-            if (!WorldBuilder.AliveWorld(entity.WorldId)) {
-                throw new Exception(string.Format(WORLD_EXCEPTION_DEAD_MESSAGE, entity.WorldId));
-            }
-            
-            var world = WorldBuilder.GetWorld(entity.WorldId);
-            if (!world.EntityIsAlive(entity)) {
-                throw new Exception(string.Format(ENTITY_EXCEPTION_DEAD_MESSAGE, entity));
-            }
-            
-            world.AddComponent<T>(entity, ref component);
-        }
-        
         public static bool Has<T>(this Entity entity) where T : struct, IComponent {
             if (!WorldBuilder.AliveWorld(entity.WorldId)) {
                 throw new Exception(string.Format(WORLD_EXCEPTION_DEAD_MESSAGE, entity.WorldId));
@@ -52,6 +39,19 @@ namespace Sw1f1.Ecs {
             }
             
             return ref world.GetComponent<T>(entity);
+        }
+        
+        public static void Add<T>(this Entity entity, T component) where T : struct, IComponent {
+            if (!WorldBuilder.AliveWorld(entity.WorldId)) {
+                throw new Exception(string.Format(WORLD_EXCEPTION_DEAD_MESSAGE, entity.WorldId));
+            }
+            
+            var world = WorldBuilder.GetWorld(entity.WorldId);
+            if (!world.EntityIsAlive(entity)) {
+                throw new Exception(string.Format(ENTITY_EXCEPTION_DEAD_MESSAGE, entity));
+            }
+            
+            world.AddComponent<T>(entity, ref component);
         }
         
         public static ref T Set<T>(this Entity entity) where T : struct, IComponent {

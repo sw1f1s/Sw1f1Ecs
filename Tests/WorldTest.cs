@@ -8,10 +8,10 @@ namespace Sw1f1.Ecs.Tests {
     public class WorldTest {
         [Test]
         public void Run_CreateWorlds() {
-            var world1 = WorldBuilder.Build(true);
-            var world2 = WorldBuilder.Build(false);
-            var world3 = WorldBuilder.Build(true);
-            var world4 = WorldBuilder.Build(false);
+            var world1 = WorldBuilder.Build();
+            var world2 = WorldBuilder.Build();
+            var world3 = WorldBuilder.Build();
+            var world4 = WorldBuilder.Build();
             
             Assert.That(world1.IsAlive(), Is.True);
             Assert.That(world2.IsAlive(), Is.True);
@@ -23,8 +23,8 @@ namespace Sw1f1.Ecs.Tests {
             Assert.That(world1.IsAlive(), Is.False);
             Assert.That(world3.IsAlive(), Is.False);
             
-            var world5 = WorldBuilder.Build(true);
-            var world6 = WorldBuilder.Build(false);
+            var world5 = WorldBuilder.Build();
+            var world6 = WorldBuilder.Build();
             
             Assert.That(world1.IsAlive(), Is.False);
             Assert.That(world3.IsAlive(), Is.False);
@@ -34,16 +34,12 @@ namespace Sw1f1.Ecs.Tests {
             WorldBuilder.AllDestroy();
         }
         
-        [TestCase(1, false)]
-        [TestCase(10, false)]
-        [TestCase(100, false)]
-        [TestCase(1000, false)]
-        [TestCase(1, true)]
-        [TestCase(10, true)]
-        [TestCase(100, true)]
-        [TestCase(1000, true)]
-        public void Run_CreateEntity(int count, bool isConcurrent) {
-            var world = WorldBuilder.Build(isConcurrent);
+        [TestCase(1)]
+        [TestCase(10)]
+        [TestCase(100)]
+        [TestCase(1000)]
+        public void Run_CreateEntity(int count) {
+            var world = WorldBuilder.Build();
             var filter1 = world.GetFilter(new FilterMask<Component1>());
             var filter2 = world.GetFilter(new FilterMask<Component2>());
             var filter3 = world.GetFilter(new FilterMask<Component3>());
@@ -76,11 +72,9 @@ namespace Sw1f1.Ecs.Tests {
             
             world.Destroy();
         }
-        
-        [TestCase(false)]
-        [TestCase(true)]
-        public void Run_LifeEntity(bool isConcurrent) {
-            var world = WorldBuilder.Build(isConcurrent);
+        [Test]
+        public void Run_LifeEntity() {
+            var world = WorldBuilder.Build();
             var filter1 = world.GetFilter(new FilterMask<Component1>());
             var filter2 = world.GetFilter(new FilterMask<Component2>());
             var filter3 = world.GetFilter(new FilterMask<Component3>());
@@ -114,11 +108,10 @@ namespace Sw1f1.Ecs.Tests {
             
             world.Destroy();
         }
-
-        [TestCase(true)]
-        [TestCase(false)]
-        public void Run_CopyEntity(bool isConcurrent) {
-            var world = WorldBuilder.Build(isConcurrent);
+        
+        [Test]
+        public void Run_CopyEntity() {
+            var world = WorldBuilder.Build();
             var entity1 = world.CreateEntity<IsTestEntity>();
             entity1.Add(new Component1(100));
             entity1.GetOrSet<Component2>();
@@ -140,10 +133,9 @@ namespace Sw1f1.Ecs.Tests {
             world.Destroy();
         }
         
-        [TestCase(true)]
-        [TestCase(false)]
-        public void Run_Components(bool isConcurrent) {
-            var world = WorldBuilder.Build(isConcurrent);
+        [Test]
+        public void Run_Components() {
+            var world = WorldBuilder.Build();
             
             var entity1 = world.CreateEntity<IsTestEntity>();
             entity1.Add(new Component1(100));
@@ -161,10 +153,9 @@ namespace Sw1f1.Ecs.Tests {
             world.Destroy();
         }
         
-        [TestCase(false)]
-        [TestCase(true)]
-        public void Run_Any_Remove_Components(bool isConcurrent) {
-            var world = WorldBuilder.Build(isConcurrent);
+        [Test]
+        public void Run_Any_Remove_Components() {
+            var world = WorldBuilder.Build();
             
             var entity1 = world.CreateEntity<IsTestEntity>();
             entity1.Add(new Component1(1));
@@ -184,10 +175,9 @@ namespace Sw1f1.Ecs.Tests {
             world.Destroy();
         }
 
-        [TestCase(false)]
-        [TestCase(true)]
-        public void Run_Filters(bool isConcurrent) {
-            var world = WorldBuilder.Build(isConcurrent);
+        [Test]
+        public void Run_Filters() {
+            var world = WorldBuilder.Build();
             List<Entity> cacheEntities = new List<Entity>();
             var entity1 = world.CreateEntity<IsTestEntity>();
             entity1.Add(new Component1(100));
@@ -237,10 +227,9 @@ namespace Sw1f1.Ecs.Tests {
             world.Destroy();
         }
 
-        [TestCase(true)]
-        [TestCase(false)]
-        public void Run_Systems(bool isConcurrent) {
-            var world = WorldBuilder.Build(isConcurrent);
+        [Test]
+        public void Run_Systems() {
+            var world = WorldBuilder.Build();
             var systems = new Systems(world);
             systems
                 .Add(new TestInitSystem())
@@ -269,10 +258,9 @@ namespace Sw1f1.Ecs.Tests {
             world.Destroy();
         }
         
-        [TestCase(true)]
-        [TestCase(false)]
-        public void Run_GroupSystems(bool isConcurrent) {
-            var world = WorldBuilder.Build(isConcurrent);
+        [Test]
+        public void Run_GroupSystems() {
+            var world = WorldBuilder.Build();
             var systems = new Systems(world);
             systems
                 .Add(new TestInitSystem())
@@ -320,9 +308,8 @@ namespace Sw1f1.Ecs.Tests {
             world.Destroy();
         }
 
-        [TestCase(true)]
-        [TestCase(false)]
-        public void Run_Exceptions(bool isConcurrent) {
+        [Test]
+        public void Run_Exceptions() {
             var world = WorldBuilder.Build();
             var entity1 = world.CreateEntity<IsTestEntity>();
             var entity2 = world.CreateEntity<IsTestEntity>();

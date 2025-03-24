@@ -1,3 +1,4 @@
+using System;
 using NUnit.Framework;
 
 namespace Sw1f1.Ecs.Tests {
@@ -7,7 +8,7 @@ namespace Sw1f1.Ecs.Tests {
         [TestCase(100)]
         [TestCase(1000)]
         public void Run_FilterCreateEntityTreadJob(int count) {
-            var world = WorldBuilder.Build(true);
+            var world = WorldBuilder.Build();
             var filter1 = world.GetFilter(new FilterMask<Component1>());
             var filter2 = world.GetFilter(new FilterMask<Component2>());
             var createEntityFilterThread = new CreateEntityFilterThreadJob(world);
@@ -19,7 +20,7 @@ namespace Sw1f1.Ecs.Tests {
             }
             
             createEntityFilterThread.Execute(filter1);
-            Assert.That(filter2.GetCount(), Is.EqualTo(count));
+            Assert.That(filter2.GetCount(), Is.EqualTo(0));
             world.Destroy();
         }
 
@@ -28,7 +29,7 @@ namespace Sw1f1.Ecs.Tests {
         [TestCase(100)]
         [TestCase(1000)]
         public void Run_FilterIncreaseComponentTreadJob(int count) {
-            var world = WorldBuilder.Build(true);
+            var world = WorldBuilder.Build();
             var filter = world.GetFilter(new FilterMask<Component1>());
             var increaseComponent1FilterTread = new IncreaseComponent1FilterThreadJob();
             var entities = new Entity[count];
@@ -55,7 +56,7 @@ namespace Sw1f1.Ecs.Tests {
         [TestCase(100)]
         [TestCase(1000)]
         public void Run_FilterAddComponentTreadJob(int count) {
-            var world = WorldBuilder.Build(true);
+            var world = WorldBuilder.Build();
             var filter = world.GetFilter(new FilterMask<Component1>());
             var addComponentFilterTread = new AddComponentFilterThreadJob();
             var entities = new Entity[count];
@@ -68,7 +69,7 @@ namespace Sw1f1.Ecs.Tests {
             addComponentFilterTread.Execute(filter);
             for (int i = 0; i < count; i++) {
                 Assert.That(entities[i].Has<Component2>(), Is.True, $"Component2 should exist on entity{entities[i]}");
-                Assert.That(entities[i].Has<Component3>(), Is.True, $"Component3 should exist on entity{entities[i]}");
+                Assert.That(entities[i].Has<Component3>(), Is.False, $"Component3 should exist on entity{entities[i]}");
             }
             
             world.Destroy();
@@ -78,7 +79,7 @@ namespace Sw1f1.Ecs.Tests {
         [TestCase(100)]
         [TestCase(1000)]
         public void Run_FilterRemoveComponentTreadJob(int count) {
-            var world = WorldBuilder.Build(true);
+            var world = WorldBuilder.Build();
             var filter = world.GetFilter(new FilterMask<Component1>());
             var removeComponentFilterTread = new RemoveComponentFilterThreadJob();
             var entities = new Entity[count];
@@ -117,15 +118,18 @@ namespace Sw1f1.Ecs.Tests {
             }
             
             protected override void ExecuteInternal(Entity entity) {
-                var e = _world.CreateEntity<IsTestEntity>();
-                e.Add(new Component2());
+                Assert.Throws<NotSupportedException>(() => {
+                    var e = _world.CreateEntity<IsTestEntity>();
+                });
             }
         }
         
         private class AddComponentFilterThreadJob : FilterThreadJob {
             protected override void ExecuteInternal(Entity entity) {
                 entity.Add(new Component2());
-                entity.GetOrSet<Component3>();
+                Assert.Throws<NotSupportedException>(() => {
+                    entity.GetOrSet<Component3>();
+                });
             }
         }
         

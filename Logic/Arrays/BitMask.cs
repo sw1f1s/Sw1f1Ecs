@@ -24,7 +24,7 @@ namespace Sw1f1.Ecs {
 
         private BitMask(in BitMask copy) {
             if (copy._isDisposed) {
-                throw new ObjectDisposedException(nameof(UnsafeBitMask));
+                throw new ObjectDisposedException(nameof(BitMask));
             }
             
             _bits = new uint[copy._bits.Length];
@@ -33,18 +33,15 @@ namespace Sw1f1.Ecs {
             _isDisposed = false;
         }
 
-        public UnsafeBitMask AsUnsafe() {
-            UnsafeBitMask unsafeBitMask = new UnsafeBitMask((uint)_bits.Length);
-            foreach (var value in this){
-                unsafeBitMask.Set(value);
-            }
-            return unsafeBitMask;
+        [MethodImpl (MethodImplOptions.AggressiveInlining)]
+        public BitMask Clone() {
+            return new BitMask(this);
         }
         
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
         public void Set(int id) {
             if (_isDisposed) {
-                throw new ObjectDisposedException(nameof(UnsafeBitMask));
+                throw new ObjectDisposedException(nameof(BitMask));
             }
             
             var (arrayIndex, bitIndex) = GetIndices(id);
@@ -56,7 +53,7 @@ namespace Sw1f1.Ecs {
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
         public void Unset(int id) {
             if (_isDisposed) {
-                throw new ObjectDisposedException(nameof(UnsafeBitMask));
+                throw new ObjectDisposedException(nameof(BitMask));
                 
             }
             var (arrayIndex, bitIndex) = GetIndices(id);
@@ -69,7 +66,7 @@ namespace Sw1f1.Ecs {
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
         public bool Has(int id) {
             if (_isDisposed) {
-                throw new ObjectDisposedException(nameof(UnsafeBitMask));
+                throw new ObjectDisposedException(nameof(BitMask));
             }
             
             var (arrayIndex, bitIndex) = GetIndices(id);
@@ -79,16 +76,17 @@ namespace Sw1f1.Ecs {
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
         public void Clear() {
             if (_isDisposed) {
-                throw new ObjectDisposedException(nameof(UnsafeBitMask));
+                throw new ObjectDisposedException(nameof(BitMask));
             }
             
             Array.Clear(_bits, 0, _bits.Length);
+            _count = 0;
         }
         
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
         public bool HasAllCollision(in BitMask other) {
             if (_isDisposed || other._isDisposed) {
-                throw new ObjectDisposedException(nameof(UnsafeBitMask));
+                throw new ObjectDisposedException(nameof(BitMask));
             }
             
             for (int i = 0; i < other._bits.Length; i++) {
@@ -103,7 +101,7 @@ namespace Sw1f1.Ecs {
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
         public bool HasAnyCollision(in BitMask other) {
             if (_isDisposed || other._isDisposed) {
-                throw new ObjectDisposedException(nameof(UnsafeBitMask));
+                throw new ObjectDisposedException(nameof(BitMask));
             }
             
             int minLength = Math.Min(_bits.Length, other._bits.Length);
@@ -117,7 +115,7 @@ namespace Sw1f1.Ecs {
         
         public Enumerator GetEnumerator() {
             if (_isDisposed) {
-                throw new ObjectDisposedException(nameof(UnsafeBitMask));
+                throw new ObjectDisposedException(nameof(BitMask));
             }
             
             return new Enumerator(this);
@@ -126,7 +124,7 @@ namespace Sw1f1.Ecs {
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
         private int GetHashId() {
             if (_isDisposed) {
-                throw new ObjectDisposedException(nameof(UnsafeBitMask));
+                throw new ObjectDisposedException(nameof(BitMask));
             }
             
             unchecked {
@@ -160,7 +158,7 @@ namespace Sw1f1.Ecs {
 
         public static BitMask operator &(in BitMask a, in BitMask b) {
             if (a._isDisposed || b._isDisposed) {
-                throw new ObjectDisposedException(nameof(UnsafeBitMask));
+                throw new ObjectDisposedException(nameof(BitMask));
             }
             
             int resultLength = Math.Min(a._bits.Length, b._bits.Length);
@@ -175,7 +173,7 @@ namespace Sw1f1.Ecs {
     
         public static BitMask operator |(in BitMask a, in BitMask b) {
             if (a._isDisposed || b._isDisposed) {
-                throw new ObjectDisposedException(nameof(UnsafeBitMask));
+                throw new ObjectDisposedException(nameof(BitMask));
             }
             
             int resultLength = Math.Max(a._bits.Length, b._bits.Length);

@@ -10,12 +10,12 @@ namespace Sw1f1.Ecs {
             _excludes = new BitMask(Options.COMPONENT_ENTITY_CAPACITY);
         }
 
-        internal UnsafeBitMask GetIncludes() {
-            return _includes.AsUnsafe();
+        internal BitMask GetIncludes() {
+            return _includes.Clone();
         }
         
-        internal UnsafeBitMask GetExcludes() {
-            return _excludes.AsUnsafe();
+        internal BitMask GetExcludes() {
+            return _excludes.Clone();
         }
 
         public int GetHashId() {

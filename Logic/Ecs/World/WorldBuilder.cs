@@ -8,8 +8,8 @@ namespace Sw1f1.Ecs {
         private static uint _freeIndexesCount = 2;
         
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
-        public static IWorld Build(bool isConcurrent = false) {
-            var world = CreateWorld(isConcurrent);
+        public static IWorld Build() {
+            var world = CreateWorld();
             _worlds.Add(world.Id, world);
             return world;
         }
@@ -39,13 +39,9 @@ namespace Sw1f1.Ecs {
         }
 
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
-        private static IWorld CreateWorld(bool isConcurrent) {
+        private static IWorld CreateWorld() {
             TryResize();
             int index = (int)_freeIndexes[--_freeIndexesCount];
-            if (isConcurrent) {
-                return new ConcurrentWorld(index);
-            }
-            
             return new World(index);   
         }
 

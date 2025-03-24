@@ -1,3 +1,4 @@
+using System;
 using System.Runtime.CompilerServices;
 
 namespace Sw1f1.Ecs {
@@ -9,27 +10,29 @@ namespace Sw1f1.Ecs {
         public int Id { get; private set; }
         private readonly EntityStorage _entityStorage;
         private readonly FilterMap _filterMap;
+        private readonly ConcurrentBuffer _concurrentBuffer;
         private SparseArray<AbstractComponentStorage> _components = new (Options.COMPONENT_CAPACITY);
+        private int _lock;
         private bool _isDisposed;
         
         bool IWorld.IsAlive => !_isDisposed;
-#if DEBUG
-        SparseArray<EntityData> IWorld.SafeEntities => _entityStorage.Entities.AsSafeArray();
-#endif
-        ref UnsafeSparseArray<EntityData> IWorld.Entities => ref _entityStorage.Entities;
-        
-        public bool IsConcurrent => false;
+        ref SparseArray<EntityData> IWorld.Entities => ref _entityStorage.Entities;
         
         internal World(int id) {
             Id = id;
             _entityStorage = new EntityStorage(id, Options.ENTITY_CAPACITY);
             _filterMap = new FilterMap(this);
+            _concurrentBuffer = new ConcurrentBuffer(this);
         }
         
 #region Entities
 
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
         public Entity CreateEntity<T>() where T : struct, IComponent {
+            if (_lock > 0) {
+                throw new NotSupportedException("You cannot create entity while the world is locked");
+            }
+            
             var entity = CreateEntityInternal();
             entity.Set<T>();
             return entity;
@@ -37,6 +40,10 @@ namespace Sw1f1.Ecs {
         
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
         public Entity CopyEntity(Entity entity) {
+            if (_lock > 0) {
+                throw new NotSupportedException("You cannot copy entity while the world is locked");
+            }
+            
             var copyEntity = CreateEntityInternal();
             ref var entityData = ref _entityStorage.Get(entity);
             foreach (var componentId in entityData.Components) {
@@ -59,20 +66,16 @@ namespace Sw1f1.Ecs {
         
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
         void IWorld.DestroyEntity(Entity entity) {
+            if (_lock > 0) {
+                throw new NotSupportedException("You cannot destroy entity while the world is locked");
+            }
+            
             var entityData = _entityStorage.Get(entity);
             foreach (var componentId in entityData.Components) {
                 _components.Get(componentId).RemoveComponent(entity);
                 _filterMap.UpdateFilters(componentId);
             }
             _entityStorage.Return(entityData);
-        }
-
-        [MethodImpl (MethodImplOptions.AggressiveInlining)]
-        void IWorld.AddComponent<T>(Entity entity, ref T component) {
-            var storage = GetComponentStorage<T>();
-            storage.AddComponent(entity, ref component);
-            _entityStorage.Get(entity).AddComponent(storage.Id);
-            _filterMap.UpdateFilters(storage.Id);
         }
         
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
@@ -86,9 +89,26 @@ namespace Sw1f1.Ecs {
             var storage = GetComponentStorage<T>();
             return ref storage.GetComponent(entity);
         }
+
+        [MethodImpl (MethodImplOptions.AggressiveInlining)]
+        void IWorld.AddComponent<T>(Entity entity, ref T component) {
+            if (_lock > 0) {
+                _concurrentBuffer.AddComponent(entity, ref component);
+                return;
+            }
+            
+            var storage = GetComponentStorage<T>();
+            storage.AddComponent(entity, ref component);
+            _entityStorage.Get(entity).AddComponent(storage.Id);
+            _filterMap.UpdateFilters(storage.Id);
+        }
         
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
         ref T IWorld.SetComponent<T>(Entity entity) {
+            if (_lock > 0) {
+                throw new NotSupportedException("You cannot set components while the world is locked");
+            }
+            
             var storage = GetComponentStorage<T>();
             _entityStorage.Get(entity).AddComponent(storage.Id);
             _filterMap.UpdateFilters(storage.Id);
@@ -97,6 +117,11 @@ namespace Sw1f1.Ecs {
         
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
         void IWorld.RemoveComponent<T>(Entity entity) {
+            if (_lock > 0) {
+                _concurrentBuffer.RemoveComponent<T>(entity);
+                return;
+            }
+            
             var storage = GetComponentStorage<T>();
             storage.RemoveComponent(entity);
             ref var entityData = ref _entityStorage.Get(entity);
@@ -145,6 +170,17 @@ namespace Sw1f1.Ecs {
         }
 #endregion
 
+        void IWorld.Lock() {
+            _lock++;
+        }
+
+        void IWorld.Unlock() {
+            _lock--;
+            if (_lock == 0) {
+                _concurrentBuffer.Execute();
+            }
+        }
+
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
         public void Clear() {
             _filterMap.Clear();
@@ -152,6 +188,8 @@ namespace Sw1f1.Ecs {
                 component.Clear();
             }
             _entityStorage.Clear();
+            _concurrentBuffer.Clear();
+            _lock = 0;
         }
 
         ~World() => 
@@ -165,6 +203,7 @@ namespace Sw1f1.Ecs {
             WorldBuilder.Destroy(this);
             _isDisposed = true;
             _filterMap.Dispose();
+            _concurrentBuffer.Dispose();
             _entityStorage.Dispose();
             foreach (var component in _components) {
                 component.Dispose();

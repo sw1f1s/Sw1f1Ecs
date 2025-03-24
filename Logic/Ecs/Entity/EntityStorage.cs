@@ -9,16 +9,16 @@ namespace Sw1f1.Ecs {
 #endif
     internal class EntityStorage : IDisposable {
         private readonly int _worldId;
-        private UnsafeSparseArray<EntityData> _entities;
-        private UnsafeSparseArray<EntityData> _pool;
+        private SparseArray<EntityData> _entities;
+        private SparseArray<EntityData> _pool;
         private bool _isDisposed;
-        public ref UnsafeSparseArray<EntityData> Entities => ref _entities;
+        public ref SparseArray<EntityData> Entities => ref _entities;
         
         public EntityStorage(int worldId, uint capacity) {
             _worldId = worldId;
-            _entities = new UnsafeSparseArray<EntityData>(capacity);
-            _pool = new UnsafeSparseArray<EntityData>(capacity);
-            for (int i = (int)_pool.Length - 1; i >= 0; i--) {
+            _entities = new SparseArray<EntityData>(capacity);
+            _pool = new SparseArray<EntityData>(capacity);
+            for (int i = _pool.Length - 1; i >= 0; i--) {
                 var data = new EntityData(new Entity(i, -1, _worldId), Options.COMPONENT_ENTITY_CAPACITY);
                 _pool.Add(i, data);
             }

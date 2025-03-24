@@ -9,21 +9,20 @@ namespace Sw1f1.Ecs {
 #endif
     internal struct EntityData : IDisposable {
         private Entity _entity;
-        private UnsafeBitMask _components;
+        private BitMask _components;
         private bool _isDisposed;
         
         public int Id => _entity.Id;
-        public UnsafeBitMask Components => _components;
+        public BitMask Components => _components;
         public bool IsEmpty => _components.Count == 0;
         
 #if DEBUG
-        public BitMask SafeComponents => _components.AsSafe();
         public IReadOnlyList<Type> TypeComponents => WorldBuilder.GetWorld(_entity.WorldId).GetTypeComponents(_components);
 #endif
 
-        public EntityData(Entity entity, uint componentCapacity) {
+        public EntityData(Entity entity, int componentCapacity) {
             _entity = entity;
-            _components = new UnsafeBitMask(componentCapacity);
+            _components = new BitMask(componentCapacity);
             _isDisposed = false;
         }
         
