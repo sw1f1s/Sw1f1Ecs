@@ -1,4 +1,5 @@
 using System;
+using Sw1f1.Ecs.Collections;
 
 namespace Sw1f1.Ecs {
     public interface IWorld : IDisposable {

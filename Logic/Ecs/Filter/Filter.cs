@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using Sw1f1.Ecs.Collections;
 
 namespace Sw1f1.Ecs {
 #if ENABLE_IL2CPP

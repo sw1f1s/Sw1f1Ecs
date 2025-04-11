@@ -1,7 +1,7 @@
 using System;
 using System.Runtime.CompilerServices;
 
-namespace Sw1f1.Ecs {
+namespace Sw1f1.Ecs.Collections {
 #if ENABLE_IL2CPP
     [Il2CppSetOption (Option.NullChecks, false)]
     [Il2CppSetOption (Option.ArrayBoundsChecks, false)]
