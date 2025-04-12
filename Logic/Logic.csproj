@@ -9,7 +9,7 @@
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <RepositoryUrl>https://github.com/sw1f1s/Sw1f1Ecs</RepositoryUrl>
         <TargetFramework>netstandard2.1</TargetFramework>
-        <ImplicitUsings>enable</ImplicitUsings>
+        <ImplicitUsings>disable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <RootNamespace>Sw1f1.Ecs</RootNamespace>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
