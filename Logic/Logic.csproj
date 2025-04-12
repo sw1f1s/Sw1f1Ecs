@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
         <PackageId>Sw1f1Ecs</PackageId>
-        <Version>0.2.1</Version>
+        <Version>0.4.1</Version>
         <Authors>Volodya Litvinov</Authors>
         <OutputType>Library</OutputType>
         <Description>Sw1f1ECS - C# Entity Component System framework</Description>
