@@ -8,8 +8,8 @@ namespace Sw1f1.Ecs {
     [Il2CppSetOption (Option.ArrayBoundsChecks, false)]
 #endif
     internal sealed class ConcurrentBuffer {
-        private readonly ReaderWriterLockSlim _accessLock = new(LockRecursionPolicy.SupportsRecursion);
-        private readonly List<IConcurrentOperation> _operations = new(Options.CONCURRENT_OPERATION_CAPACITY);
+        private readonly ReaderWriterLockSlim _accessLock = new ReaderWriterLockSlim(LockRecursionPolicy.SupportsRecursion);
+        private readonly List<IConcurrentOperation> _operations = new List<IConcurrentOperation>(Options.CONCURRENT_OPERATION_CAPACITY);
         private IWorld _world;
         private bool _isDisposed;
 

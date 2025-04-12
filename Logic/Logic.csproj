@@ -1,17 +1,21 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
         <PackageId>Sw1f1Ecs</PackageId>
-        <Version>0.4.1</Version>
+        <AssemblyName>Sw1f1Ecs</AssemblyName>
+        <Version>0.4.2</Version>
         <Authors>Volodya Litvinov</Authors>
         <OutputType>Library</OutputType>
         <Description>Sw1f1ECS - C# Entity Component System framework</Description>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <RepositoryUrl>https://github.com/sw1f1s/Sw1f1Ecs</RepositoryUrl>
-        <TargetFramework>net8.0</TargetFramework>
+        <TargetFramework>netstandard2.1</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <RootNamespace>Sw1f1.Ecs</RootNamespace>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
+    <ItemGroup>
+      <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="6.1.2" />
+    </ItemGroup>
 
 </Project>

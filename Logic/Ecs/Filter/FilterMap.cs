@@ -9,11 +9,11 @@ namespace Sw1f1.Ecs {
     [Il2CppSetOption (Option.ArrayBoundsChecks, false)]
 #endif
     internal class FilterMap : IDisposable {
-        private readonly List<Filter> _filters = new(Options.FILTER_CAPACITY);
-        private readonly Dictionary<int, List<int>> _filterComponentsMaps = new (Options.FILTER_CAPACITY);
-        private readonly Dictionary<int, List<int>> _filterMaskMaps = new (Options.FILTER_CAPACITY);
+        private readonly List<Filter> _filters = new List<Filter>(Options.FILTER_CAPACITY);
+        private readonly Dictionary<int, List<int>> _filterComponentsMaps = new Dictionary<int, List<int>>(Options.FILTER_CAPACITY);
+        private readonly Dictionary<int, List<int>> _filterMaskMaps = new Dictionary<int, List<int>>(Options.FILTER_CAPACITY);
         private IWorld _world;
-        private SparseArray<int> _componentForUpdate = new(Options.COMPONENT_CAPACITY);
+        private SparseArray<int> _componentForUpdate = new SparseArray<int>(Options.COMPONENT_CAPACITY);
 
         public FilterMap(IWorld world) {
             _world = world;

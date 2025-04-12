@@ -4,7 +4,7 @@ using Sw1f1.Ecs.Collections;
 
 namespace Sw1f1.Ecs {
     public static class WorldBuilder {
-        private static SparseArray<IWorld> _worlds = new(Options.WORLD_CAPACITY);
+        private static SparseArray<IWorld> _worlds = new SparseArray<IWorld>(Options.WORLD_CAPACITY);
         private static uint[] _freeIndexes = new uint[2] { 1, 0 };
         private static uint _freeIndexesCount = 2;
         

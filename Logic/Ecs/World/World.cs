@@ -12,7 +12,7 @@ namespace Sw1f1.Ecs {
         private readonly EntityStorage _entityStorage;
         private readonly FilterMap _filterMap;
         private readonly ConcurrentBuffer _concurrentBuffer;
-        private SparseArray<AbstractComponentStorage> _components = new (Options.COMPONENT_CAPACITY);
+        private SparseArray<AbstractComponentStorage> _components = new SparseArray<AbstractComponentStorage>(Options.COMPONENT_CAPACITY);
         private int _lock;
         private bool _isDisposed;
         

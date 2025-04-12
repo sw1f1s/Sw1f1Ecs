@@ -10,7 +10,7 @@ namespace Sw1f1.Ecs {
 #endif
     public sealed class Filter : IDisposable {
         private IWorld _world;
-        private SparseArray<Entity> _cache = new(Options.ENTITY_CAPACITY);
+        private SparseArray<Entity> _cache = new SparseArray<Entity>(Options.ENTITY_CAPACITY);
         
         private BitMask _includes;
         private BitMask _excludes;

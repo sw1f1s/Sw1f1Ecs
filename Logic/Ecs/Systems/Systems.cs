@@ -5,7 +5,7 @@ namespace Sw1f1.Ecs {
     public sealed class Systems : ISystems {
         private IWorld _world;
         private readonly SystemContainer _systemContainer;
-        private readonly Dictionary<string, InternalGroupSystem> _groupSystems = new(Options.SYSTEMS_CAPACITY);
+        private readonly Dictionary<string, InternalGroupSystem> _groupSystems = new Dictionary<string, InternalGroupSystem>(Options.SYSTEMS_CAPACITY);
         private bool _isDisposed;
         
         public IWorld World => _world;
