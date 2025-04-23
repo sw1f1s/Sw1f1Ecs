@@ -2,7 +2,7 @@
     <PropertyGroup>
         <PackageId>Sw1f1Ecs</PackageId>
         <AssemblyName>Sw1f1Ecs</AssemblyName>
-        <Version>0.4.2</Version>
+        <Version>0.4.3</Version>
         <Authors>Volodya Litvinov</Authors>
         <OutputType>Library</OutputType>
         <Description>Sw1f1ECS - C# Entity Component System framework</Description>

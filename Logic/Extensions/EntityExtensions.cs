@@ -54,6 +54,20 @@ namespace Sw1f1.Ecs {
             world.AddComponent<T>(entity, ref component);
         }
         
+        public static void Replace<T>(this Entity entity, T component) where T : struct, IComponent {
+            if (!WorldBuilder.AliveWorld(entity.WorldId)) {
+                throw new Exception(string.Format(WORLD_EXCEPTION_DEAD_MESSAGE, entity.WorldId));
+            }
+            
+            var world = WorldBuilder.GetWorld(entity.WorldId);
+            if (!world.EntityIsAlive(entity)) {
+                throw new Exception(string.Format(ENTITY_EXCEPTION_DEAD_MESSAGE, entity));
+            }
+            
+            world.RemoveComponent<T>(entity);
+            world.AddComponent<T>(entity, ref component);
+        }
+        
         public static ref T Set<T>(this Entity entity) where T : struct, IComponent {
             if (!WorldBuilder.AliveWorld(entity.WorldId)) {
                 throw new Exception(string.Format(WORLD_EXCEPTION_DEAD_MESSAGE, entity.WorldId));

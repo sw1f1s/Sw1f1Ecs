@@ -11,6 +11,7 @@ namespace Sw1f1.Ecs {
         private readonly T _defaultInstance = default;
         private AutoResetHandler<T> _autoResetHandler;
         private AutoCopyHandler<T> _autoCopyHandler;
+        private AutoDestroyHandler<T> _autoDestroyHandler;
         private SparseArray<T> _components;
         private bool _isDisposed;
 
@@ -26,6 +27,10 @@ namespace Sw1f1.Ecs {
 
             if (TryGetInterface(ref _defaultInstance, out IAutoResetComponent<T> autoReset)) {
                 _autoResetHandler = autoReset.Reset;
+            }
+            
+            if (TryGetInterface(ref _defaultInstance, out IAutoDestroyComponent<T> autoDestroy)) {
+                _autoDestroyHandler = autoDestroy.Destroy;
             }
         }
         
@@ -85,16 +90,18 @@ namespace Sw1f1.Ecs {
         }
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public override void RemoveComponent(Entity entity) {
+        public override bool RemoveComponent(Entity entity) {
             if (_isDisposed) {
                 throw new ObjectDisposedException(nameof(ComponentStorage<T>));
             }
             
-            if (!HasComponentInternal(entity)) {
-                throw new Exception($"{entity} not contains {typeof(T).Name}");
+            if (HasComponentInternal(entity)) {
+                _autoDestroyHandler?.Invoke(ref GetComponentInternal(entity));
+                _components.Remove(entity.Id);
+                return true;
             }
             
-            _components.Remove(entity.Id);
+            return false;
         }
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -142,6 +149,7 @@ namespace Sw1f1.Ecs {
             _isDisposed = true;
             _autoResetHandler = null;
             _autoCopyHandler = null;
+            _autoDestroyHandler = null;
             _components.Dispose();
             _components = default;
         }

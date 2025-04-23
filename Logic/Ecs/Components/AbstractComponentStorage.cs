@@ -6,14 +6,14 @@ namespace Sw1f1.Ecs {
         public abstract int Id { get; }
         public abstract IComponent GetGeneralizedComponent(Entity entity);
         public abstract bool HasComponent(Entity entity);
-        public abstract void RemoveComponent(Entity entity);
+        public abstract bool RemoveComponent(Entity entity);
         public abstract void CopyComponent(Entity fromEntity, Entity toEntity);
         internal abstract void Clear();
         public abstract void Dispose();
         
         protected delegate void AutoResetHandler<T>(ref T c);
-
         protected delegate void AutoCopyHandler<T>(ref T src, ref T dst);
+        protected delegate void AutoDestroyHandler<T>(ref T c);
         
         protected bool TryGetInterface<T, TInterface>(ref T defaultInstance, out TInterface obj) {
             obj = default;

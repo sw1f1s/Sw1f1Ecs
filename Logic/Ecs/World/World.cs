@@ -124,12 +124,13 @@ namespace Sw1f1.Ecs {
             }
             
             var storage = GetComponentStorage<T>();
-            storage.RemoveComponent(entity);
-            ref var entityData = ref _entityStorage.Get(entity);
-            entityData.RemoveComponent(storage.Id);
-            _filterMap.UpdateFilters(storage.Id);
-            if (entityData.IsEmpty) {
-                _entityStorage.Return(entityData);
+            if (storage.RemoveComponent(entity)) {
+                ref var entityData = ref _entityStorage.Get(entity);
+                entityData.RemoveComponent(storage.Id);
+                _filterMap.UpdateFilters(storage.Id);
+                if (entityData.IsEmpty) {
+                    _entityStorage.Return(entityData);
+                }   
             }
         }
         

@@ -146,9 +146,19 @@ namespace Sw1f1.Ecs.Tests {
             
             component.Value = 200;
             Assert.That(entity1.Get<Component1>().Value == 200, Is.True);
-
+            
+            entity1.Replace(new Component1(300));
+            Assert.That(entity1.Get<Component1>().Value == 300, Is.True);
+            
             entity1.Remove<Component1>();
             Assert.That(entity1.Has<Component1>(), Is.False);
+            
+            var list = new List<int>() {1, 2, 3, 4};
+            entity1.Replace(new Component4(list));
+            Assert.That(list.Count == 4, Is.True);
+            Assert.That(entity1.Get<Component4>().Value.Count == 4, Is.True);
+            entity1.Remove<Component4>();
+            Assert.That(list.Count == 0, Is.True);
             
             world.Destroy();
         }
@@ -317,10 +327,6 @@ namespace Sw1f1.Ecs.Tests {
                 entity1.Get<Component1>();
             });
             
-            Assert.Throws<Exception>(() => {
-                entity1.Remove<Component1>();
-            });
-            
             entity1.Destroy();
             Assert.Throws<Exception>(() => {
                 entity1.Has<Component1>();
@@ -430,6 +436,17 @@ namespace Sw1f1.Ecs.Tests {
 
         public void Copy(ref Component3 src, ref Component3 dst) {
             dst.Value = src.Value;
+        }
+    }
+
+    public struct Component4 : IComponent, IAutoDestroyComponent<Component4> {
+        public List<int> Value;
+        public Component4(List<int> value) {
+            Value = value;
+        }
+
+        public void Destroy(ref Component4 c) {
+            c.Value.Clear();
         }
     }
 
