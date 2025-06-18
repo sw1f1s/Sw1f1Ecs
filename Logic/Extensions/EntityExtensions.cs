@@ -136,7 +136,8 @@ namespace Sw1f1.Ecs {
             
             world.DestroyEntity(entity);
         }
-        
+   
+#if DEBUG
         internal static IReadOnlyList<IComponent> GetComponents(this Entity entity) {
             if (!WorldBuilder.AliveWorld(entity.WorldId)) {
                 throw new Exception(string.Format(WORLD_EXCEPTION_DEAD_MESSAGE, entity.WorldId));
@@ -155,7 +156,12 @@ namespace Sw1f1.Ecs {
                 components[index] = storage.GetGeneralizedComponent(entity);
                 index++;
             }
+            
+            Array.Sort(components, (x, y) =>
+                string.Compare(x.GetType().Name, y.GetType().Name, StringComparison.OrdinalIgnoreCase));
+            
             return components;
         }
+#endif
     }   
 }
