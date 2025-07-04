@@ -4,10 +4,10 @@ namespace Sw1f1.Ecs {
     internal abstract class AbstractComponentStorage : IDisposable {
         public abstract Type ComponentType { get; }
         public abstract int Id { get; }
-        public abstract IComponent GetGeneralizedComponent(Entity entity);
-        public abstract bool HasComponent(Entity entity);
-        public abstract bool RemoveComponent(Entity entity);
-        public abstract void CopyComponent(Entity fromEntity, Entity toEntity);
+        public abstract IComponent GetGeneralizedComponent(in Entity entity);
+        public abstract bool HasComponent(in Entity entity);
+        public abstract bool RemoveComponent(in Entity entity);
+        public abstract void CopyComponent(in Entity fromEntity, in Entity toEntity);
         internal abstract void Clear();
         public abstract void Dispose();
         

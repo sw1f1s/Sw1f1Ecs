@@ -35,7 +35,7 @@ namespace Sw1f1.Ecs {
         }
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void AddComponent(Entity entity, ref T component) {
+        public void AddComponent(in Entity entity, ref T component) {
             if (_isDisposed) {
                 throw new ObjectDisposedException(nameof(ComponentStorage<T>));
             }
@@ -47,12 +47,12 @@ namespace Sw1f1.Ecs {
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public override IComponent GetGeneralizedComponent(Entity entity) {
+        public override IComponent GetGeneralizedComponent(in Entity entity) {
             return GetComponent(entity);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ref T GetComponent(Entity entity) {
+        public ref T GetComponent(in Entity entity) {
             if (_isDisposed) {
                 throw new ObjectDisposedException(nameof(ComponentStorage<T>));
             }
@@ -65,7 +65,7 @@ namespace Sw1f1.Ecs {
         }
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ref T SetComponent(Entity entity) {
+        public ref T SetComponent(in Entity entity) {
             if (_isDisposed) {
                 throw new ObjectDisposedException(nameof(ComponentStorage<T>));
             }
@@ -81,7 +81,7 @@ namespace Sw1f1.Ecs {
         }
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public override bool HasComponent(Entity entity) {
+        public override bool HasComponent(in Entity entity) {
             if (_isDisposed) {
                 throw new ObjectDisposedException(nameof(ComponentStorage<T>));
             }
@@ -90,7 +90,7 @@ namespace Sw1f1.Ecs {
         }
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public override bool RemoveComponent(Entity entity) {
+        public override bool RemoveComponent(in Entity entity) {
             if (_isDisposed) {
                 throw new ObjectDisposedException(nameof(ComponentStorage<T>));
             }
@@ -105,7 +105,7 @@ namespace Sw1f1.Ecs {
         }
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public override void CopyComponent(Entity fromEntity, Entity toEntity) {
+        public override void CopyComponent(in Entity fromEntity, in Entity toEntity) {
             if (_isDisposed) {
                 throw new ObjectDisposedException(nameof(ComponentStorage<T>));
             }
@@ -122,17 +122,17 @@ namespace Sw1f1.Ecs {
         }
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void AddComponentInternal(Entity entity, T component) {
+        private void AddComponentInternal(in Entity entity, T component) {
             _components.Add(entity.Id, component);
         }
         
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
-        private bool HasComponentInternal(Entity entity) {
+        private bool HasComponentInternal(in Entity entity) {
             return _components.Has(entity.Id);
         }
 
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
-        private ref T GetComponentInternal(Entity entity) {
+        private ref T GetComponentInternal(in Entity entity) {
             return ref _components.Get(entity.Id);
         }
 

@@ -40,7 +40,7 @@ namespace Sw1f1.Ecs {
         }
         
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
-        public Entity CopyEntity(Entity entity) {
+        public Entity CopyEntity(in Entity entity) {
             if (_lock > 0) {
                 throw new NotSupportedException("You cannot copy entity while the world is locked");
             }
@@ -56,7 +56,7 @@ namespace Sw1f1.Ecs {
         }
 
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
-        bool IWorld.EntityIsAlive(Entity entity) {
+        bool IWorld.EntityIsAlive(in Entity entity) {
             if (!_entityStorage.Has(entity)) {
                 return false;
             }
@@ -66,7 +66,7 @@ namespace Sw1f1.Ecs {
         }
         
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
-        void IWorld.DestroyEntity(Entity entity) {
+        void IWorld.DestroyEntity(in Entity entity) {
             if (_lock > 0) {
                 throw new NotSupportedException("You cannot destroy entity while the world is locked");
             }
@@ -80,19 +80,19 @@ namespace Sw1f1.Ecs {
         }
         
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
-        bool IWorld.HasComponent<T>(Entity entity) {
+        bool IWorld.HasComponent<T>(in Entity entity) {
             var storage = GetComponentStorage<T>();
             return storage.HasComponent(entity);
         }
         
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
-        ref T IWorld.GetComponent<T>(Entity entity) {
+        ref T IWorld.GetComponent<T>(in Entity entity) {
             var storage = GetComponentStorage<T>();
             return ref storage.GetComponent(entity);
         }
 
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
-        void IWorld.AddComponent<T>(Entity entity, ref T component) {
+        void IWorld.AddComponent<T>(in Entity entity, ref T component) {
             if (_lock > 0) {
                 _concurrentBuffer.AddComponent(entity, ref component);
                 return;
@@ -105,7 +105,7 @@ namespace Sw1f1.Ecs {
         }
         
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
-        ref T IWorld.SetComponent<T>(Entity entity) {
+        ref T IWorld.SetComponent<T>(in Entity entity) {
             if (_lock > 0) {
                 throw new NotSupportedException("You cannot set components while the world is locked");
             }
@@ -117,7 +117,7 @@ namespace Sw1f1.Ecs {
         }
         
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
-        void IWorld.RemoveComponent<T>(Entity entity) {
+        void IWorld.RemoveComponent<T>(in Entity entity) {
             if (_lock > 0) {
                 _concurrentBuffer.RemoveComponent<T>(entity);
                 return;

@@ -6,7 +6,7 @@ namespace Sw1f1.Ecs {
         private const string WORLD_EXCEPTION_DEAD_MESSAGE = "World {0} is dead.";
         private const string ENTITY_EXCEPTION_DEAD_MESSAGE = "{0} is dead.";
         
-        public static bool IsAlive(this Entity entity) {
+        public static bool IsAlive(this in Entity entity) {
             if (!WorldBuilder.AliveWorld(entity.WorldId)) {
                 return false;
             }
@@ -15,7 +15,7 @@ namespace Sw1f1.Ecs {
             return world.EntityIsAlive(entity);
         }
         
-        public static bool Has<T>(this Entity entity) where T : struct, IComponent {
+        public static bool Has<T>(this in Entity entity) where T : struct, IComponent {
             if (!WorldBuilder.AliveWorld(entity.WorldId)) {
                 throw new Exception(string.Format(WORLD_EXCEPTION_DEAD_MESSAGE, entity.WorldId));
             }
@@ -28,7 +28,7 @@ namespace Sw1f1.Ecs {
             return world.HasComponent<T>(entity);
         }
         
-        public static ref T Get<T>(this Entity entity) where T : struct, IComponent {
+        public static ref T Get<T>(this in Entity entity) where T : struct, IComponent {
             if (!WorldBuilder.AliveWorld(entity.WorldId)) {
                 throw new Exception(string.Format(WORLD_EXCEPTION_DEAD_MESSAGE, entity.WorldId));
             }
@@ -41,7 +41,7 @@ namespace Sw1f1.Ecs {
             return ref world.GetComponent<T>(entity);
         }
         
-        public static void Add<T>(this Entity entity, T component) where T : struct, IComponent {
+        public static Entity Add<T>(this in Entity entity, T component) where T : struct, IComponent {
             if (!WorldBuilder.AliveWorld(entity.WorldId)) {
                 throw new Exception(string.Format(WORLD_EXCEPTION_DEAD_MESSAGE, entity.WorldId));
             }
@@ -52,9 +52,10 @@ namespace Sw1f1.Ecs {
             }
             
             world.AddComponent<T>(entity, ref component);
+            return entity;
         }
         
-        public static void Replace<T>(this Entity entity, T component) where T : struct, IComponent {
+        public static Entity Replace<T>(this in Entity entity, T component) where T : struct, IComponent {
             if (!WorldBuilder.AliveWorld(entity.WorldId)) {
                 throw new Exception(string.Format(WORLD_EXCEPTION_DEAD_MESSAGE, entity.WorldId));
             }
@@ -66,9 +67,10 @@ namespace Sw1f1.Ecs {
             
             world.RemoveComponent<T>(entity);
             world.AddComponent<T>(entity, ref component);
+            return entity;
         }
         
-        public static ref T Set<T>(this Entity entity) where T : struct, IComponent {
+        public static ref T Set<T>(this in Entity entity) where T : struct, IComponent {
             if (!WorldBuilder.AliveWorld(entity.WorldId)) {
                 throw new Exception(string.Format(WORLD_EXCEPTION_DEAD_MESSAGE, entity.WorldId));
             }
@@ -81,7 +83,7 @@ namespace Sw1f1.Ecs {
             return ref world.SetComponent<T>(entity);
         }
         
-        public static ref T GetOrSet<T>(this Entity entity) where T : struct, IComponent {
+        public static ref T GetOrSet<T>(this in Entity entity) where T : struct, IComponent {
             if (!WorldBuilder.AliveWorld(entity.WorldId)) {
                 throw new Exception(string.Format(WORLD_EXCEPTION_DEAD_MESSAGE, entity.WorldId));
             }
@@ -98,7 +100,7 @@ namespace Sw1f1.Ecs {
             return ref entity.Set<T>();
         }
         
-        public static void Remove<T>(this Entity entity) where T : struct, IComponent {
+        public static void Remove<T>(this in Entity entity) where T : struct, IComponent {
             if (!WorldBuilder.AliveWorld(entity.WorldId)) {
                 throw new Exception(string.Format(WORLD_EXCEPTION_DEAD_MESSAGE, entity.WorldId));
             }
@@ -111,7 +113,7 @@ namespace Sw1f1.Ecs {
             world.RemoveComponent<T>(entity);
         }
         
-        public static Entity Copy(this Entity entity) {
+        public static Entity Copy(this in Entity entity) {
             if (!WorldBuilder.AliveWorld(entity.WorldId)) {
                 throw new Exception(string.Format(WORLD_EXCEPTION_DEAD_MESSAGE, entity.WorldId));
             }
@@ -124,7 +126,7 @@ namespace Sw1f1.Ecs {
             return world.CopyEntity(entity);
         }
         
-        public static void Destroy(this Entity entity) {
+        public static void Destroy(this in Entity entity) {
             if (!WorldBuilder.AliveWorld(entity.WorldId)) {
                 throw new Exception(string.Format(WORLD_EXCEPTION_DEAD_MESSAGE, entity.WorldId));
             }
@@ -138,7 +140,7 @@ namespace Sw1f1.Ecs {
         }
    
 #if DEBUG
-        internal static IReadOnlyList<IComponent> GetComponents(this Entity entity) {
+        internal static IReadOnlyList<IComponent> GetComponents(this in Entity entity) {
             if (!WorldBuilder.AliveWorld(entity.WorldId)) {
                 throw new Exception(string.Format(WORLD_EXCEPTION_DEAD_MESSAGE, entity.WorldId));
             }
