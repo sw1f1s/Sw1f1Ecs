@@ -33,6 +33,8 @@ namespace Sw1f1.Ecs {
             if (_isDisposed) {
                 throw new ObjectDisposedException(nameof(Systems));
             }
+
+            Add(new RemoveOneTickComponentSystem(_world));
             _systemContainer.Init();
         }
 

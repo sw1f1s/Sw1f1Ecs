@@ -33,7 +33,7 @@ namespace Sw1f1.Ecs.Collections {
         }
         
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
-        public void Add(int id, T item) {
+        public void Add(int id, in T item) {
             if (_isDisposed) {
                 throw new ObjectDisposedException(nameof(SparseArray<T>));
             }
@@ -44,7 +44,7 @@ namespace Sw1f1.Ecs.Collections {
         }
         
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
-        public bool Has(int id) {
+        public readonly bool Has(int id) {
             if (_isDisposed) {
                 throw new ObjectDisposedException(nameof(SparseArray<T>));
             }

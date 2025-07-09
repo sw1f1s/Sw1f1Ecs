@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using Sw1f1.Ecs.Collections;
 
@@ -12,11 +13,14 @@ namespace Sw1f1.Ecs {
         private readonly EntityStorage _entityStorage;
         private readonly FilterMap _filterMap;
         private readonly ConcurrentBuffer _concurrentBuffer;
-        private SparseArray<AbstractComponentStorage> _components = new SparseArray<AbstractComponentStorage>(Options.COMPONENT_CAPACITY);
+        private readonly ComponentsStorage _componentsStorage;
         private int _lock;
         private bool _isDisposed;
-        
+
         bool IWorld.IsAlive => !_isDisposed;
+
+        IComponentsStorage IWorld.ComponentsStorage => _componentsStorage;
+
         ref SparseArray<EntityData> IWorld.Entities => ref _entityStorage.Entities;
         
         internal World(int id) {
@@ -24,6 +28,7 @@ namespace Sw1f1.Ecs {
             _entityStorage = new EntityStorage(id, Options.ENTITY_CAPACITY);
             _filterMap = new FilterMap(this);
             _concurrentBuffer = new ConcurrentBuffer(this);
+            _componentsStorage = new ComponentsStorage();
         }
         
 #region Entities
@@ -48,7 +53,7 @@ namespace Sw1f1.Ecs {
             var copyEntity = CreateEntityInternal();
             ref var entityData = ref _entityStorage.Get(entity);
             foreach (var componentId in entityData.Components) {
-                _components.Get(componentId).CopyComponent(entity, copyEntity);
+                _componentsStorage.Get(componentId).CopyComponent(entity, copyEntity);
                 _entityStorage.Get(copyEntity).AddComponent(componentId);
                 _filterMap.UpdateFilters(componentId);
             }
@@ -73,7 +78,7 @@ namespace Sw1f1.Ecs {
             
             var entityData = _entityStorage.Get(entity);
             foreach (var componentId in entityData.Components) {
-                _components.Get(componentId).RemoveComponent(entity);
+                _componentsStorage.Get(componentId).RemoveComponent(entity);
                 _filterMap.UpdateFilters(componentId);
             }
             _entityStorage.Return(entityData);
@@ -81,13 +86,13 @@ namespace Sw1f1.Ecs {
         
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
         bool IWorld.HasComponent<T>(in Entity entity) {
-            var storage = GetComponentStorage<T>();
+            var storage = _componentsStorage.GetComponentStorage<T>();
             return storage.HasComponent(entity);
         }
         
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
         ref T IWorld.GetComponent<T>(in Entity entity) {
-            var storage = GetComponentStorage<T>();
+            var storage = _componentsStorage.GetComponentStorage<T>();
             return ref storage.GetComponent(entity);
         }
 
@@ -98,7 +103,7 @@ namespace Sw1f1.Ecs {
                 return;
             }
             
-            var storage = GetComponentStorage<T>();
+            var storage = _componentsStorage.GetComponentStorage<T>();
             storage.AddComponent(entity, ref component);
             _entityStorage.Get(entity).AddComponent(storage.Id);
             _filterMap.UpdateFilters(storage.Id);
@@ -110,7 +115,7 @@ namespace Sw1f1.Ecs {
                 throw new NotSupportedException("You cannot set components while the world is locked");
             }
             
-            var storage = GetComponentStorage<T>();
+            var storage = _componentsStorage.GetComponentStorage<T>();
             _entityStorage.Get(entity).AddComponent(storage.Id);
             _filterMap.UpdateFilters(storage.Id);
             return ref storage.SetComponent(entity);
@@ -123,7 +128,24 @@ namespace Sw1f1.Ecs {
                 return;
             }
             
-            var storage = GetComponentStorage<T>();
+            var storage = _componentsStorage.GetComponentStorage<T>();
+            RemoveComponentInternal(entity, storage);
+        }
+
+        [MethodImpl (MethodImplOptions.AggressiveInlining)]
+        void IWorld.RemoveComponent(in Entity entity, int componentIdx) {
+            var storage = _componentsStorage.Get(componentIdx);
+            RemoveComponentInternal(entity, storage);
+        }
+
+        [MethodImpl (MethodImplOptions.AggressiveInlining)]
+        private Entity CreateEntityInternal() {
+            ref var entityData = ref _entityStorage.GetFreeEntity();
+            return entityData.GetEntity();
+        }
+
+        [MethodImpl (MethodImplOptions.AggressiveInlining)]
+        private void RemoveComponentInternal(in Entity entity, AbstractComponentStorage storage) {
             if (storage.RemoveComponent(entity)) {
                 ref var entityData = ref _entityStorage.Get(entity);
                 entityData.RemoveComponent(storage.Id);
@@ -133,30 +155,15 @@ namespace Sw1f1.Ecs {
                 }   
             }
         }
-        
-        [MethodImpl (MethodImplOptions.AggressiveInlining)]
-        private Entity CreateEntityInternal() {
-            ref var entityData = ref _entityStorage.GetFreeEntity();
-            return entityData.GetEntity();
-        }
 #endregion
 
 #region Components
-        private ComponentStorage<T> GetComponentStorage<T>() where T : struct, IComponent {
-            int componentId = ComponentStorageIndex<T>.StaticId;
-            if (!_components.Has(componentId)) {
-                _components.Add(componentId, new ComponentStorage<T>());
-            }
-            
-            return Unsafe.As<ComponentStorage<T>>(_components.Get(componentId));
-        }
-
         AbstractComponentStorage IWorld.GetComponentStorage(int componentId) {
-            return _components.Get(componentId);
+            return _componentsStorage.Get(componentId);
         }
 
         bool IWorld.HasComponentStorage(int componentId) {
-            return _components.Has(componentId);
+            return _componentsStorage.Has(componentId);
         }
 #endregion
 
@@ -186,9 +193,7 @@ namespace Sw1f1.Ecs {
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
         public void Clear() {
             _filterMap.Clear();
-            foreach (var component in _components) {
-                component.Clear();
-            }
+            _componentsStorage.Clear();
             _entityStorage.Clear();
             _concurrentBuffer.Clear();
             _lock = 0;
@@ -207,10 +212,7 @@ namespace Sw1f1.Ecs {
             _filterMap.Dispose();
             _concurrentBuffer.Dispose();
             _entityStorage.Dispose();
-            foreach (var component in _components) {
-                component.Dispose();
-            }
-            _components.Dispose();
+            _componentsStorage.Dispose();
         }
     }   
 }

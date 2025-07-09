@@ -267,6 +267,47 @@ namespace Sw1f1.Ecs.Tests {
             systems.Dispose();
             world.Destroy();
         }
+
+        [Test]
+        public void Run_RemoveOneTickSystems() {
+            var world = WorldBuilder.Build();
+            var systems = new Systems(world);
+            systems
+                .Add(new TestInitSystem())
+                .Inject();
+            
+            systems.Init();
+            
+            var filter1 = world.GetFilter(new FilterMask<Component1>());
+            foreach (var entity in filter1) {
+                entity.Replace(new Test1OneTick());
+            }
+            
+            systems.Update();
+            
+            foreach (var entity in filter1) {
+                Assert.That(entity.Has<Test1OneTick>(), Is.False);
+            }
+            
+            foreach (var entity in filter1) {
+                entity.GetOrSet<Test1OneTick>();
+            }
+            
+            var filter2 = world.GetFilter(new FilterMask<Component3>());
+            foreach (var entity in filter2) {
+                entity.GetOrSet<Test1OneTick>();
+                entity.GetOrSet<Test2OneTick>();
+            }
+            
+            systems.Update();
+            foreach (var entity in filter1) {
+                Assert.That(entity.Has<Test1OneTick>(), Is.False);
+                Assert.That(entity.Has<Test2OneTick>(), Is.False);
+            }
+            
+            systems.Dispose();
+            world.Destroy();
+        }
         
         [Test]
         public void Run_GroupSystems() {
@@ -402,6 +443,8 @@ namespace Sw1f1.Ecs.Tests {
     public struct IsTestEntity43 : IComponent { }
     public struct IsTestEntity44 : IComponent { }
     public struct IsTestEntity45 : IComponent { }
+    public struct Test1OneTick : IComponent, IOneTickComponent { }
+    public struct Test2OneTick : IComponent, IOneTickComponent { }
 
     public struct Component1 : IComponent {
         public int Value;

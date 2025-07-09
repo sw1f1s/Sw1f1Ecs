@@ -20,7 +20,6 @@ namespace Sw1f1.Ecs {
 
         internal ComponentStorage() {
             _components = new SparseArray<T>(Options.ENTITY_CAPACITY);
-
             if (TryGetInterface(ref _defaultInstance, out IAutoCopyComponent<T> autoCopy)) {
                 _autoCopyHandler = autoCopy.Copy;
             }
@@ -32,6 +31,8 @@ namespace Sw1f1.Ecs {
             if (TryGetInterface(ref _defaultInstance, out IAutoDestroyComponent<T> autoDestroy)) {
                 _autoDestroyHandler = autoDestroy.Destroy;
             }
+            
+            IsOneTickComponent = _defaultInstance is IOneTickComponent;
         }
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -49,6 +50,15 @@ namespace Sw1f1.Ecs {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override IComponent GetGeneralizedComponent(in Entity entity) {
             return GetComponent(entity);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public override int[] GetEntities() {
+            var entities = new int[_components.Count];
+            for (int i = 0; i < _components.Count; i++) {
+                entities[i] = (int)_components.DenseItems[i].Index;
+            }
+            return entities;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

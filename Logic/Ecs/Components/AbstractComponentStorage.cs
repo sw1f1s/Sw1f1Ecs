@@ -2,9 +2,11 @@ using System;
 
 namespace Sw1f1.Ecs {
     internal abstract class AbstractComponentStorage : IDisposable {
+        public bool IsOneTickComponent { get; protected set; }
         public abstract Type ComponentType { get; }
         public abstract int Id { get; }
         public abstract IComponent GetGeneralizedComponent(in Entity entity);
+        public abstract int[] GetEntities();
         public abstract bool HasComponent(in Entity entity);
         public abstract bool RemoveComponent(in Entity entity);
         public abstract void CopyComponent(in Entity fromEntity, in Entity toEntity);

@@ -5,6 +5,7 @@ namespace Sw1f1.Ecs {
     public interface IWorld : IDisposable {
         int Id { get; }
         internal bool IsAlive { get; }
+        internal IComponentsStorage ComponentsStorage { get; }
         internal ref SparseArray<EntityData> Entities { get; }
         
         Entity CreateEntity<T>() where T : struct, IComponent;
@@ -18,6 +19,7 @@ namespace Sw1f1.Ecs {
         internal void AddComponent<T>(in Entity entity, ref T component) where T : struct, IComponent;
         internal ref T SetComponent<T>(in Entity entity) where T : struct, IComponent;
         internal void RemoveComponent<T>(in Entity entity) where T : struct, IComponent;
+        internal void RemoveComponent(in Entity entity, int componentIdx);
 
         internal AbstractComponentStorage GetComponentStorage(int componentId);
         internal bool HasComponentStorage(int componentId);
