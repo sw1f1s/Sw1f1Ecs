@@ -1,6 +1,9 @@
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Threading;
+#if ENABLE_IL2CPP
+using Unity.IL2CPP.CompilerServices;
+#endif
 
 namespace Sw1f1.Ecs {
 #if ENABLE_IL2CPP
