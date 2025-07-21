@@ -38,7 +38,9 @@ namespace Sw1f1.Ecs {
             }
             
 #if DEBUG
-            OnAddSystem?.Invoke(system);
+            if (system is not InternalGroupSystem) {
+                OnAddSystem?.Invoke(system);   
+            }
 #endif
         }
 

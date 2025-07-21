@@ -14,6 +14,13 @@ namespace Sw1f1.Ecs {
             _systems = systems;
             _isActive = group.State;
             _systemContainer = new SystemContainer(group.Systems.Length);
+            
+#if DEBUG
+            _systemContainer.OnAddSystem += systems.RegisterSystem;
+            _systemContainer.OnStartSystemExecute += systems.StartSystemExecute;
+            _systemContainer.OnEndSystemExecute += systems.EndSystemExecute;
+#endif
+            
             for (int i = 0; i < group.Systems.Length; i++) {
                 Add(group.Systems[i]);
             }

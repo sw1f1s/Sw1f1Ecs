@@ -9,7 +9,6 @@ namespace Sw1f1.Ecs {
         public static event Action<IWorld, ISystem> OnStartSystemExecute;
         public static event Action<IWorld, ISystem> OnEndSystemExecute;
 #endif
-        
         private IWorld _world;
         private readonly SystemContainer _systemContainer;
         private readonly Dictionary<string, InternalGroupSystem> _groupSystems = new Dictionary<string, InternalGroupSystem>(Options.SYSTEMS_CAPACITY);
@@ -59,13 +58,13 @@ namespace Sw1f1.Ecs {
         }
 
 #if DEBUG
-        private void RegisterSystem(ISystem system) {
+        public void RegisterSystem(ISystem system) {
             OnAddSystem?.Invoke(_world, system);
         }
-        private void StartSystemExecute(ISystem system) {
+        public void StartSystemExecute(ISystem system) {
             OnStartSystemExecute?.Invoke(_world, system);
         }
-        private void EndSystemExecute(ISystem system) {
+        public void EndSystemExecute(ISystem system) {
             OnEndSystemExecute?.Invoke(_world, system);
         }
 #endif
