@@ -4,6 +4,12 @@ using Sw1f1.Ecs.Collections;
 
 namespace Sw1f1.Ecs {
     public static class WorldBuilder {
+        #if DEBUG
+        public static event Action<IWorld> OnWorldCreated;
+        public static event Action<IWorld> OnWorldDestroyed;
+        public static ref SparseArray<IWorld> Worlds => ref _worlds;
+        #endif
+        
         private static SparseArray<IWorld> _worlds = new SparseArray<IWorld>(Options.WORLD_CAPACITY);
         private static uint[] _freeIndexes = new uint[2] { 1, 0 };
         private static uint _freeIndexesCount = 2;
@@ -12,12 +18,18 @@ namespace Sw1f1.Ecs {
         public static IWorld Build() {
             var world = CreateWorld();
             _worlds.Add(world.Id, world);
+#if DEBUG
+            OnWorldCreated?.Invoke(world);
+#endif
             return world;
         }
 
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
         public static void AllDestroy() {
             foreach (var world in _worlds) {
+#if DEBUG
+                OnWorldDestroyed?.Invoke(world);
+#endif
                 world.Destroy();
             }
             _worlds.Clear();
@@ -35,6 +47,9 @@ namespace Sw1f1.Ecs {
 
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
         public static void Destroy(IWorld world) {
+#if DEBUG
+            OnWorldDestroyed?.Invoke(world);
+#endif
             _worlds.Remove(world.Id);
             _freeIndexes[_freeIndexesCount++] = (uint)world.Id;
         }

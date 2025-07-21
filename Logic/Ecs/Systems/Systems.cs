@@ -3,6 +3,13 @@ using System.Collections.Generic;
 
 namespace Sw1f1.Ecs {
     public sealed class Systems : ISystems {
+#if DEBUG
+        public static readonly Dictionary<IWorld, Systems> SystemsMap = new Dictionary<IWorld, Systems>();
+        public static event Action<IWorld, ISystem> OnAddSystem;
+        public static event Action<IWorld, ISystem> OnStartSystemExecute;
+        public static event Action<IWorld, ISystem> OnEndSystemExecute;
+#endif
+        
         private IWorld _world;
         private readonly SystemContainer _systemContainer;
         private readonly Dictionary<string, InternalGroupSystem> _groupSystems = new Dictionary<string, InternalGroupSystem>(Options.SYSTEMS_CAPACITY);
@@ -14,6 +21,12 @@ namespace Sw1f1.Ecs {
         public Systems(IWorld world) {
             _world = world;
             _systemContainer = new SystemContainer();
+#if DEBUG
+            SystemsMap[_world] = this;
+            _systemContainer.OnAddSystem += RegisterSystem;
+            _systemContainer.OnStartSystemExecute += StartSystemExecute;
+            _systemContainer.OnEndSystemExecute += EndSystemExecute;
+#endif
         }
 
         public ISystems Add(ISystem system) {
@@ -45,7 +58,26 @@ namespace Sw1f1.Ecs {
             _systemContainer.Update();
         }
 
+#if DEBUG
+        private void RegisterSystem(ISystem system) {
+            OnAddSystem?.Invoke(_world, system);
+        }
+        private void StartSystemExecute(ISystem system) {
+            OnStartSystemExecute?.Invoke(_world, system);
+        }
+        private void EndSystemExecute(ISystem system) {
+            OnEndSystemExecute?.Invoke(_world, system);
+        }
+#endif
+
         public void Dispose() {
+#if DEBUG
+            SystemsMap.Remove(_world);
+            _systemContainer.OnAddSystem -= RegisterSystem;
+            _systemContainer.OnStartSystemExecute -= StartSystemExecute;
+            _systemContainer.OnEndSystemExecute -= EndSystemExecute;
+#endif
+            
             _isDisposed = true;
             _world = null;
             _systemContainer.Dispose();

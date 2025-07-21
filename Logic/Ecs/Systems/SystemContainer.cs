@@ -3,6 +3,12 @@ using System.Collections.Generic;
 
 namespace Sw1f1.Ecs {
     internal class SystemContainer : IDisposable {
+#if DEBUG
+        public event Action<ISystem> OnAddSystem;
+        public event Action<ISystem> OnStartSystemExecute;
+        public event Action<ISystem> OnEndSystemExecute;
+#endif
+        
         private readonly List<ISystem> _allSystems;
         private readonly List<IInitSystem> _initSystems;
         private readonly List<IUpdateSystem> _updateSystems;
@@ -30,6 +36,10 @@ namespace Sw1f1.Ecs {
             if (system is IUpdateSystem updateSystem) {
                 _updateSystems.Add(updateSystem);
             }
+            
+#if DEBUG
+            OnAddSystem?.Invoke(system);
+#endif
         }
 
         internal void Init() {
@@ -48,7 +58,13 @@ namespace Sw1f1.Ecs {
             }
 
             for (int i = 0; i < _updateSystems.Count; i++) {
+#if DEBUG
+                OnStartSystemExecute?.Invoke(_updateSystems[i]);
+#endif
                 _updateSystems[i].Update();
+#if DEBUG
+                OnEndSystemExecute?.Invoke(_updateSystems[i]);
+#endif
             }
         }
 

@@ -25,7 +25,6 @@ namespace Sw1f1.Ecs {
         IComponentsStorage IWorld.ComponentsStorage => _componentsStorage;
 
         ref SparseArray<EntityData> IWorld.Entities => ref _entityStorage.Entities;
-        
         internal World(int id) {
             Id = id;
             _entityStorage = new EntityStorage(id, Options.ENTITY_CAPACITY);
@@ -36,6 +35,19 @@ namespace Sw1f1.Ecs {
         
 #region Entities
 
+#if DEBUG
+        public event Action<IWorld, Entity> OnCreateEntity;
+        public event Action<IWorld, Entity> OnCopyEntity;
+        public event Action<IWorld, Entity> OnDestroyEntity;
+        public event Action<IWorld, Entity, Type> OnAddComponent;
+        public event Action<IWorld, Entity, Type> OnRemoveComponent;
+        IEnumerable<Entity> IWorld.AllEntities() {
+            foreach (var entity in _entityStorage.Entities) {
+                yield return entity.GetEntity();
+            }
+        }
+#endif
+        
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
         public Entity CreateEntity<T>() where T : struct, IComponent {
             if (_lock > 0) {
@@ -43,6 +55,9 @@ namespace Sw1f1.Ecs {
             }
             
             var entity = CreateEntityInternal();
+#if DEBUG
+            OnCreateEntity?.Invoke(this, entity);
+#endif
             entity.Set<T>();
             return entity;
         }
@@ -60,6 +75,9 @@ namespace Sw1f1.Ecs {
                 _entityStorage.Get(copyEntity).AddComponent(componentId);
                 _filterMap.UpdateFilters(componentId);
             }
+#if DEBUG
+            OnCopyEntity?.Invoke(this, copyEntity);
+#endif
             return copyEntity;
         }
 
@@ -78,6 +96,10 @@ namespace Sw1f1.Ecs {
             if (_lock > 0) {
                 throw new NotSupportedException("You cannot destroy entity while the world is locked");
             }
+            
+#if DEBUG
+            OnDestroyEntity?.Invoke(this, entity);
+#endif
             
             var entityData = _entityStorage.Get(entity);
             foreach (var componentId in entityData.Components) {
@@ -110,6 +132,9 @@ namespace Sw1f1.Ecs {
             storage.AddComponent(entity, ref component);
             _entityStorage.Get(entity).AddComponent(storage.Id);
             _filterMap.UpdateFilters(storage.Id);
+#if DEBUG
+            OnAddComponent?.Invoke(this, entity, typeof(T));
+#endif
         }
         
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
@@ -121,6 +146,9 @@ namespace Sw1f1.Ecs {
             var storage = _componentsStorage.GetComponentStorage<T>();
             _entityStorage.Get(entity).AddComponent(storage.Id);
             _filterMap.UpdateFilters(storage.Id);
+#if DEBUG
+            OnAddComponent?.Invoke(this, entity, typeof(T));
+#endif
             return ref storage.SetComponent(entity);
         }
         
@@ -157,6 +185,10 @@ namespace Sw1f1.Ecs {
                     _entityStorage.Return(entityData);
                 }   
             }
+            
+#if DEBUG
+            OnRemoveComponent?.Invoke(this, entity, storage.ComponentType);
+#endif
         }
 #endregion
 

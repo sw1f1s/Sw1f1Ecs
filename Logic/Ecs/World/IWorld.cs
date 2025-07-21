@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Sw1f1.Ecs.Collections;
 
 namespace Sw1f1.Ecs {
@@ -7,6 +8,14 @@ namespace Sw1f1.Ecs {
         internal bool IsAlive { get; }
         internal IComponentsStorage ComponentsStorage { get; }
         internal ref SparseArray<EntityData> Entities { get; }
+#if DEBUG
+        event Action<IWorld, Entity> OnCreateEntity;
+        event Action<IWorld, Entity> OnCopyEntity;
+        event Action<IWorld, Entity> OnDestroyEntity;
+        event Action<IWorld, Entity, Type> OnAddComponent;
+        event Action<IWorld, Entity, Type> OnRemoveComponent;
+        IEnumerable<Entity> AllEntities();
+#endif
         
         Entity CreateEntity<T>() where T : struct, IComponent;
         internal bool EntityIsAlive(in Entity entity);
