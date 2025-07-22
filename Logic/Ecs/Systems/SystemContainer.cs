@@ -61,11 +61,15 @@ namespace Sw1f1.Ecs {
 
             for (int i = 0; i < _updateSystems.Count; i++) {
 #if DEBUG
-                OnStartSystemExecute?.Invoke(_updateSystems[i]);
+                if (_updateSystems[i] is not InternalGroupSystem) {
+                    OnStartSystemExecute?.Invoke(_updateSystems[i]);
+                }
 #endif
                 _updateSystems[i].Update();
 #if DEBUG
-                OnEndSystemExecute?.Invoke(_updateSystems[i]);
+                if (_updateSystems[i] is not InternalGroupSystem) {
+                    OnEndSystemExecute?.Invoke(_updateSystems[i]);
+                }
 #endif
             }
         }
