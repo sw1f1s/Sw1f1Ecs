@@ -5,8 +5,9 @@ namespace Sw1f1.Ecs {
         public bool IsOneTickComponent { get; protected set; }
         public abstract Type ComponentType { get; }
         public abstract int Id { get; }
+        public abstract int Count { get; }
         public abstract IComponent GetGeneralizedComponent(in Entity entity);
-        public abstract int[] GetEntities();
+        public abstract int[] GetRentedPoolEntities();
         public abstract bool HasComponent(in Entity entity);
         public abstract bool RemoveComponent(in Entity entity);
         public abstract void CopyComponent(in Entity fromEntity, in Entity toEntity);

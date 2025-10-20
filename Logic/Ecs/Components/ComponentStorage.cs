@@ -1,4 +1,6 @@
 using System;
+using System.Buffers;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using Sw1f1.Ecs.Collections;
 #if UNITY_IL2CPP
@@ -23,6 +25,7 @@ namespace Sw1f1.Ecs {
 
         public override Type ComponentType => typeof(T);
         public override int Id => ComponentStorageIndex<T>.StaticId;
+        public override int Count => (int)_components.Count;
 
         internal ComponentStorage(PoolFactory poolFactory) {
             _poolFactory = poolFactory;
@@ -65,8 +68,8 @@ namespace Sw1f1.Ecs {
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public override int[] GetEntities() {
-            var entities = new int[_components.Count];
+        public override int[] GetRentedPoolEntities() {
+            var entities = ArrayPool<int>.Shared.Rent(Count);
             for (int i = 0; i < _components.Count; i++) {
                 entities[i] = (int)_components.DenseItems[i].Index;
             }
