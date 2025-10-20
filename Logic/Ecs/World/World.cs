@@ -17,6 +17,7 @@ namespace Sw1f1.Ecs {
         private readonly FilterMap _filterMap;
         private readonly ConcurrentBuffer _concurrentBuffer;
         private readonly ComponentsStorage _componentsStorage;
+        private readonly PoolFactory _poolFactory;
         private int _lock;
         private bool _isDisposed;
 
@@ -30,7 +31,8 @@ namespace Sw1f1.Ecs {
             _entityStorage = new EntityStorage(id, Options.ENTITY_CAPACITY);
             _filterMap = new FilterMap(this);
             _concurrentBuffer = new ConcurrentBuffer(this);
-            _componentsStorage = new ComponentsStorage();
+            _poolFactory = new PoolFactory();
+            _componentsStorage = new ComponentsStorage(_poolFactory);
         }
         
 #region Entities
@@ -231,6 +233,7 @@ namespace Sw1f1.Ecs {
             _componentsStorage.Clear();
             _entityStorage.Clear();
             _concurrentBuffer.Clear();
+            _poolFactory.Clear();
             _lock = 0;
         }
 
@@ -248,6 +251,7 @@ namespace Sw1f1.Ecs {
             _concurrentBuffer.Dispose();
             _entityStorage.Dispose();
             _componentsStorage.Dispose();
+            _poolFactory.Dispose();
         }
     }   
 }

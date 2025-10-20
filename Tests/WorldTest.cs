@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using NUnit.Framework;
+using Sw1f1.Ecs.Collections;
 using Sw1f1.Ecs.DI;
 
 namespace Sw1f1.Ecs.Tests {
@@ -159,6 +160,20 @@ namespace Sw1f1.Ecs.Tests {
             Assert.That(entity1.Get<Component4>().Value.Count == 4, Is.True);
             entity1.Remove<Component4>();
             Assert.That(list.Count == 0, Is.True);
+            
+            Assert.That(entity1.GetOrSet<Component5>().Value.Count, Is.EqualTo(0));
+            entity1.GetOrSet<Component5>().Value.Add(1);
+            Assert.That(entity1.GetOrSet<Component5>().Value.Count, Is.EqualTo(1));
+            
+            var entity1Copy = entity1.Copy();
+            entity1Copy.GetOrSet<Component5>().Value.Add(2);
+            
+            Assert.That(entity1.GetOrSet<Component5>().Value.Count, Is.EqualTo(1));
+            Assert.That(entity1Copy.GetOrSet<Component5>().Value.Count, Is.EqualTo(2));
+            
+            entity1.Remove<Component5>();
+            Assert.That(entity1.Has<Component5>(), Is.False);
+            Assert.That(entity1Copy.GetOrSet<Component5>().Value.Count, Is.EqualTo(2));
             
             world.Destroy();
         }
@@ -484,12 +499,29 @@ namespace Sw1f1.Ecs.Tests {
 
     public struct Component4 : IComponent, IAutoDestroyComponent<Component4> {
         public List<int> Value;
+
         public Component4(List<int> value) {
             Value = value;
         }
 
         public void Destroy(ref Component4 c) {
             c.Value.Clear();
+        }
+    }
+
+    public struct Component5 : IComponent, IAutoPoolComponent<Component5>, IAutoCopyComponent<Component5> {
+        public PooledList<int> Value;
+        
+        public void Reset(ref Component5 c, IPoolFactory poolFactory) {
+            c.Value = poolFactory.Rent<int>();
+        }
+
+        public void Copy(ref Component5 src, ref Component5 dst) {
+            dst.Value = src.Value.Copy();
+        }
+
+        public void Destroy(ref Component5 c, IPoolFactory poolFactory) {
+            c.Value.Return();
         }
     }
 

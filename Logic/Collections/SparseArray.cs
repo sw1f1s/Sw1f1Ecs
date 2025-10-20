@@ -117,6 +117,15 @@ namespace Sw1f1.Ecs.Collections {
             for (int i = 0; i < _denseItemsCount; i++) {
                 uint sparseIndex = _denseItems[i].Index;
                 _sparseItems[sparseIndex] = 0;
+                _denseItems[i].Value = default;
+            }
+            _denseItemsCount = 0;
+        }
+        
+        [MethodImpl (MethodImplOptions.AggressiveInlining)]
+        public void FastClear() {
+            if (_isDisposed) {
+                throw new ObjectDisposedException(nameof(SparseArray<T>));
             }
             _denseItemsCount = 0;
         }

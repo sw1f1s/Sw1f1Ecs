@@ -16,6 +16,8 @@ namespace Sw1f1.Ecs {
         protected delegate void AutoResetHandler<T>(ref T c);
         protected delegate void AutoCopyHandler<T>(ref T src, ref T dst);
         protected delegate void AutoDestroyHandler<T>(ref T c);
+        protected delegate void AutoPoolResetHandler<T>(ref T c, IPoolFactory poolFactory);
+        protected delegate void AutoPoolDestroyHandler<T>(ref T c, IPoolFactory poolFactory);
         
         protected bool TryGetInterface<T, TInterface>(ref T defaultInstance, out TInterface obj) {
             obj = default;

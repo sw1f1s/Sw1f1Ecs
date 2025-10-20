@@ -13,10 +13,15 @@ namespace Sw1f1.Ecs {
 #endif
     internal class ComponentsStorage : IComponentsStorage, IDisposable {
         private readonly List<int> _oneTickComponents = new List<int>();
+        private PoolFactory _poolFactory;
         private SparseArray<AbstractComponentStorage> _components = new SparseArray<AbstractComponentStorage>(Options.COMPONENT_CAPACITY);
         private bool _isDisposed;
 
         public IReadOnlyList<int> OneTickStorages => _oneTickComponents;
+
+        public ComponentsStorage(PoolFactory poolFactory) {
+            _poolFactory = poolFactory;
+        }
 
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
         public AbstractComponentStorage Get(int componentId) {
@@ -32,7 +37,7 @@ namespace Sw1f1.Ecs {
         internal ComponentStorage<T> GetComponentStorage<T>() where T : struct, IComponent {
             int componentId = ComponentStorageIndex<T>.StaticId;
             if (!_components.Has(componentId)) {
-                var storage = new ComponentStorage<T>();
+                var storage = new ComponentStorage<T>(_poolFactory);
                 _components.Add(componentId, storage);
                 if (storage.IsOneTickComponent) {
                     _oneTickComponents.Add(componentId);   
@@ -63,6 +68,7 @@ namespace Sw1f1.Ecs {
             _isDisposed = true;
             _components.Dispose();
             _oneTickComponents.Clear();
+            _poolFactory = null;
         }
     }
 }

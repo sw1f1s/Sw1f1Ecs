@@ -12,16 +12,20 @@ namespace Sw1f1.Ecs {
 #endif
     internal sealed class ComponentStorage<T> : AbstractComponentStorage where T : struct, IComponent {
         private readonly T _defaultInstance = default;
+        private PoolFactory _poolFactory;
         private AutoResetHandler<T> _autoResetHandler;
         private AutoCopyHandler<T> _autoCopyHandler;
         private AutoDestroyHandler<T> _autoDestroyHandler;
+        private AutoPoolResetHandler<T> _autoPoolResetHandler;
+        private AutoPoolDestroyHandler<T> _autoPoolDestroyHandler;
         private SparseArray<T> _components;
         private bool _isDisposed;
 
         public override Type ComponentType => typeof(T);
         public override int Id => ComponentStorageIndex<T>.StaticId;
 
-        internal ComponentStorage() {
+        internal ComponentStorage(PoolFactory poolFactory) {
+            _poolFactory = poolFactory;
             _components = new SparseArray<T>(Options.ENTITY_CAPACITY);
             if (TryGetInterface(ref _defaultInstance, out IAutoCopyComponent<T> autoCopy)) {
                 _autoCopyHandler = autoCopy.Copy;
@@ -33,6 +37,11 @@ namespace Sw1f1.Ecs {
             
             if (TryGetInterface(ref _defaultInstance, out IAutoDestroyComponent<T> autoDestroy)) {
                 _autoDestroyHandler = autoDestroy.Destroy;
+            }
+            
+            if (TryGetInterface(ref _defaultInstance, out IAutoPoolComponent<T> autoPool)) {
+                _autoPoolResetHandler = autoPool.Reset;
+                _autoPoolDestroyHandler = autoPool.Destroy;
             }
             
             IsOneTickComponent = _defaultInstance is IOneTickComponent;
@@ -89,6 +98,7 @@ namespace Sw1f1.Ecs {
                 
             var newComponent = new T();
             _autoResetHandler?.Invoke(ref newComponent);
+            _autoPoolResetHandler?.Invoke(ref newComponent, _poolFactory);
             AddComponentInternal(entity, newComponent);
             return ref GetComponentInternal(entity);
         }
@@ -109,7 +119,9 @@ namespace Sw1f1.Ecs {
             }
             
             if (HasComponentInternal(entity)) {
-                _autoDestroyHandler?.Invoke(ref GetComponentInternal(entity));
+                ref var component = ref GetComponentInternal(entity);
+                _autoDestroyHandler?.Invoke(ref component);
+                _autoPoolDestroyHandler?.Invoke(ref component, _poolFactory);
                 _components.Remove(entity.Id);
                 return true;
             }
@@ -163,8 +175,11 @@ namespace Sw1f1.Ecs {
             _autoResetHandler = null;
             _autoCopyHandler = null;
             _autoDestroyHandler = null;
+            _autoPoolResetHandler = null;
+            _autoPoolDestroyHandler = null;
             _components.Dispose();
             _components = default;
+            _poolFactory = null;
         }
     }   
 }
