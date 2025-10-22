@@ -186,6 +186,63 @@ namespace Sw1f1.Ecs.Collections {
             list.AddRange(this);
             return list;
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public PooledList<T> Create(int capacity) {
+            return _adapter.Rent(capacity);
+        }
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Sort() {
+            if (_array == null) {
+                throw new Exception("Array is not rent on pool");
+            }
+            
+            if (_count <= 1) {
+                return;
+            }
+            
+            Array.Sort(_array, 0, _count);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Sort(IComparer<T> comparer) {
+            if (_array == null) {
+                throw new Exception("Array is not rent on pool");
+            }
+            
+            if (_count <= 1) {
+                return;
+            }
+            
+            Array.Sort(_array, 0, _count, comparer);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Sort(Comparison<T> comparison) {
+            if (_array == null) {
+                throw new Exception("Array is not rent on pool");
+            }
+            
+            if (_count <= 1) {
+                return;
+            }
+            
+            Array.Sort(_array, 0, _count, Comparer<T>.Create(comparison));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Sort(int index, int length, IComparer<T> comparer) {
+            if (_array == null) {
+                throw new Exception("Array is not rent on pool");
+            }
+            
+            if (length <= 1) {
+                return;
+            }
+
+            Array.Sort(_array, index, length, comparer);
+        }
         
         public T[] ToArray() {
             if (_array == null) {
