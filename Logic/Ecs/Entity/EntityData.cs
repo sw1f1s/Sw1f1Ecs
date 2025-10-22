@@ -50,12 +50,13 @@ namespace Sw1f1.Ecs {
         
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
         public void Clear() {
-            _entity.ResetGen();
+            _entity = _entity.ResetGen();
             _components.Clear();
         }
 
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
-        public void IncreaseGen() => _entity.IncreaseGen();
+        public void IncreaseGen() => 
+            _entity = _entity.IncreaseGen();
 
         public void Dispose() {
             if (_isDisposed) {

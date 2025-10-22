@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
 namespace Sw1f1.Ecs {
-    public struct Entity {
+    public readonly struct Entity : IEquatable<Entity> {
         public static readonly Entity Empty = new Entity(-1, -1, -1);
-        public int Id { get; private set; }
-        public int Gen { get; private set; }
-        public int WorldId { get; private set; }
+        public readonly int Id;
+        public readonly int Gen;
+        public readonly int WorldId;
 
 #if DEBUG
         public IReadOnlyList<IComponent> Components => this.GetComponents();  
@@ -19,12 +19,12 @@ namespace Sw1f1.Ecs {
         }
         
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
-        internal void IncreaseGen() => 
-            Gen++;
+        internal Entity IncreaseGen() => 
+            new Entity(Id, Gen + 1, WorldId);
         
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
-        internal void ResetGen() => 
-            Gen = 0;
+        internal Entity ResetGen() => 
+            new Entity(Id, 0, WorldId);
 
         public override bool Equals(object? obj) {
             return obj is Entity other && Equals(other);
