@@ -62,6 +62,20 @@ namespace Sw1f1.Ecs.Collections {
         }
         
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
+        public void Replace(int id, in T item) {
+            if (_isDisposed) {
+                throw new ObjectDisposedException(nameof(SparseArray<T>));
+            }
+
+            if (id >= 0 && id < _sparseItems.Length && _sparseItems[id] != 0) {
+                _denseItems[_sparseItems[id] - 1].Value = item;
+            }
+            else {
+                Add(id, item);
+            }
+        }
+        
+        [MethodImpl (MethodImplOptions.AggressiveInlining)]
         public readonly bool Has(int id) {
             if (_isDisposed) {
                 throw new ObjectDisposedException(nameof(SparseArray<T>));

@@ -21,10 +21,21 @@ namespace Sw1f1.Ecs {
         }
         
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
-        public void AddComponent<T>(Entity entity, ref T component) where T : struct, IComponent {
+        public void AddComponent<T>(Entity entity, in T component) where T : struct, IComponent {
             _accessLock.EnterWriteLock();
             try {
                 var op = new AddComponentOperation<T>(entity, component);
+                _operations.Add(op);
+            }finally {
+                _accessLock.ExitWriteLock();
+            }
+        }
+        
+        [MethodImpl (MethodImplOptions.AggressiveInlining)]
+        public void ReplaceComponent<T>(Entity entity, in T component) where T : struct, IComponent {
+            _accessLock.EnterWriteLock();
+            try {
+                var op = new ReplaceComponentOperation<T>(entity, component);
                 _operations.Add(op);
             }finally {
                 _accessLock.ExitWriteLock();

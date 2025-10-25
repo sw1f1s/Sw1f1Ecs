@@ -18,19 +18,23 @@ namespace Sw1f1.Ecs {
 #endif
         
         Entity CreateEntity<T>() where T : struct, IComponent;
+        internal Entity CreateEntity(int id, int gen);
         internal bool EntityIsAlive(in Entity entity);
         internal void DestroyEntity(in Entity entity);
+        Entity TryGetEntity(int id);
         Entity CopyEntity(in Entity entity);
 
         internal bool HasComponent<T>(in Entity entity) where T : struct, IComponent;
         internal ref T GetComponent<T>(in Entity entity) where T : struct, IComponent;
         
-        internal void AddComponent<T>(in Entity entity, ref T component) where T : struct, IComponent;
+        internal void AddComponent<T>(in Entity entity, in T component) where T : struct, IComponent;
+        internal void ReplaceComponent<T>(in Entity entity, in T component) where T : struct, IComponent;
         internal ref T SetComponent<T>(in Entity entity) where T : struct, IComponent;
         internal void RemoveComponent<T>(in Entity entity) where T : struct, IComponent;
         internal void RemoveComponent(in Entity entity, int componentIdx);
 
-        internal AbstractComponentStorage GetComponentStorage(int componentId);
+        internal ComponentStorage<T> GetComponentStorage<T>() where T : struct, IComponent;
+        internal IComponentStorage GetComponentStorage(int componentId);
         internal bool HasComponentStorage(int componentId);
         
         Filter GetFilter(FilterMask mask);

@@ -1,0 +1,15 @@
+namespace Sw1f1.Ecs {
+    internal readonly struct ReplaceComponentOperation<T> : IConcurrentOperation where T : struct, IComponent {
+        public readonly Entity Entity;
+        public readonly T Component;
+
+        public ReplaceComponentOperation(Entity entity, in T component) {
+            Entity = entity;
+            Component = component;
+        }
+
+        public void Execute(IWorld world) {
+            world.ReplaceComponent(Entity, in Component);
+        }
+    }   
+}

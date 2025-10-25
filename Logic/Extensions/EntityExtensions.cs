@@ -41,7 +41,7 @@ namespace Sw1f1.Ecs {
             return ref world.GetComponent<T>(entity);
         }
         
-        public static Entity Add<T>(this in Entity entity, T component) where T : struct, IComponent {
+        public static Entity Add<T>(this in Entity entity, in T component) where T : struct, IComponent {
             if (!WorldBuilder.AliveWorld(entity.WorldId)) {
                 throw new Exception(string.Format(WORLD_EXCEPTION_DEAD_MESSAGE, entity.WorldId));
             }
@@ -51,11 +51,11 @@ namespace Sw1f1.Ecs {
                 throw new Exception(string.Format(ENTITY_EXCEPTION_DEAD_MESSAGE, entity));
             }
             
-            world.AddComponent<T>(entity, ref component);
+            world.AddComponent<T>(entity, in component);
             return entity;
         }
         
-        public static Entity Replace<T>(this in Entity entity, T component) where T : struct, IComponent {
+        public static Entity Replace<T>(this in Entity entity, in T component) where T : struct, IComponent {
             if (!WorldBuilder.AliveWorld(entity.WorldId)) {
                 throw new Exception(string.Format(WORLD_EXCEPTION_DEAD_MESSAGE, entity.WorldId));
             }
@@ -65,8 +65,7 @@ namespace Sw1f1.Ecs {
                 throw new Exception(string.Format(ENTITY_EXCEPTION_DEAD_MESSAGE, entity));
             }
             
-            world.RemoveComponent<T>(entity);
-            world.AddComponent<T>(entity, ref component);
+            world.ReplaceComponent<T>(entity, in component);
             return entity;
         }
         

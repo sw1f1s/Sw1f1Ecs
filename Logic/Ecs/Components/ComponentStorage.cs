@@ -12,46 +12,49 @@ namespace Sw1f1.Ecs {
     [Il2CppSetOption (Option.NullChecks, false)]
     [Il2CppSetOption (Option.ArrayBoundsChecks, false)]
 #endif
-    internal sealed class ComponentStorage<T> : AbstractComponentStorage where T : struct, IComponent {
+    internal sealed class ComponentStorage<T> : IComponentStorage where T : struct, IComponent {
         private readonly T _defaultInstance = default;
         private PoolFactory _poolFactory;
-        private AutoResetHandler<T> _autoResetHandler;
-        private AutoCopyHandler<T> _autoCopyHandler;
-        private AutoDestroyHandler<T> _autoDestroyHandler;
-        private AutoPoolResetHandler<T> _autoPoolResetHandler;
-        private AutoPoolDestroyHandler<T> _autoPoolDestroyHandler;
+        private IComponentStorage.AutoResetHandler<T> _autoResetHandler;
+        private IComponentStorage.AutoCopyHandler<T> _autoCopyHandler;
+        private IComponentStorage.AutoDestroyHandler<T> _autoDestroyHandler;
+        private IComponentStorage.AutoPoolResetHandler<T> _autoPoolResetHandler;
+        private IComponentStorage.AutoPoolDestroyHandler<T> _autoPoolDestroyHandler;
         private SparseArray<T> _components;
         private bool _isDisposed;
 
-        public override Type ComponentType => typeof(T);
-        public override int Id => ComponentStorageIndex<T>.StaticId;
-        public override int Count => (int)_components.Count;
+        public bool IsSerializableComponent { get; private set;}
+        public bool IsOneTickComponent { get; private set;}
+        public Type ComponentType => typeof(T);
+        public int Id => ComponentStorageIndex<T>.StaticId;
+        public int Count => (int)_components.Count;
 
         internal ComponentStorage(PoolFactory poolFactory) {
             _poolFactory = poolFactory;
             _components = new SparseArray<T>(Options.ENTITY_CAPACITY);
-            if (TryGetInterface(ref _defaultInstance, out IAutoCopyComponent<T> autoCopy)) {
+            if (IComponentStorage.TryGetInterface(ref _defaultInstance, out IAutoCopyComponent<T> autoCopy)) {
                 _autoCopyHandler = autoCopy.Copy;
             }
 
-            if (TryGetInterface(ref _defaultInstance, out IAutoResetComponent<T> autoReset)) {
+            if (IComponentStorage.TryGetInterface(ref _defaultInstance, out IAutoResetComponent<T> autoReset)) {
                 _autoResetHandler = autoReset.Reset;
             }
             
-            if (TryGetInterface(ref _defaultInstance, out IAutoDestroyComponent<T> autoDestroy)) {
+            if (IComponentStorage.TryGetInterface(ref _defaultInstance, out IAutoDestroyComponent<T> autoDestroy)) {
                 _autoDestroyHandler = autoDestroy.Destroy;
             }
             
-            if (TryGetInterface(ref _defaultInstance, out IAutoPoolComponent<T> autoPool)) {
+            if (IComponentStorage.TryGetInterface(ref _defaultInstance, out IAutoPoolComponent<T> autoPool)) {
                 _autoPoolResetHandler = autoPool.Reset;
                 _autoPoolDestroyHandler = autoPool.Destroy;
             }
             
             IsOneTickComponent = _defaultInstance is IOneTickComponent;
+            IsSerializableComponent = _defaultInstance is ISerializableComponent;
         }
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void AddComponent(in Entity entity, ref T component) {
+        public void AddComponent(in Entity entity, in T component) {
             if (_isDisposed) {
                 throw new ObjectDisposedException(nameof(ComponentStorage<T>));
             }
@@ -59,16 +62,29 @@ namespace Sw1f1.Ecs {
             if (HasComponentInternal(entity)) {
                 throw new Exception($"{entity} already contains {typeof(T).Name}");
             }
-            AddComponentInternal(entity, component);
+            AddComponentInternal(entity, in component);
+        }
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void ReplaceComponent(in Entity entity, in T component) {
+            if (_isDisposed) {
+                throw new ObjectDisposedException(nameof(ComponentStorage<T>));
+            }
+            
+            ReplaceComponentInternal(entity, in component);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public override IComponent GetGeneralizedComponent(in Entity entity) {
+        public ComponentSnapshot GetComponentSnapshot(ComponentSnapshotFactory factory, in Entity entity) {
+            return factory.GetSnapshot(ref GetComponent(entity));
+        }
+
+        public IComponent GetGeneralizedComponent(in Entity entity) {
             return GetComponent(entity);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public override int[] GetRentedPoolEntities() {
+        public int[] GetRentedPoolEntities() {
             var entities = ArrayPool<int>.Shared.Rent(Count);
             for (int i = 0; i < _components.Count; i++) {
                 entities[i] = (int)_components.DenseItems[i].Index;
@@ -107,7 +123,7 @@ namespace Sw1f1.Ecs {
         }
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public override bool HasComponent(in Entity entity) {
+        public bool HasComponent(in Entity entity) {
             if (_isDisposed) {
                 throw new ObjectDisposedException(nameof(ComponentStorage<T>));
             }
@@ -116,7 +132,7 @@ namespace Sw1f1.Ecs {
         }
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public override bool RemoveComponent(in Entity entity) {
+        public bool RemoveComponent(in Entity entity) {
             if (_isDisposed) {
                 throw new ObjectDisposedException(nameof(ComponentStorage<T>));
             }
@@ -132,8 +148,8 @@ namespace Sw1f1.Ecs {
             return false;
         }
         
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public override void CopyComponent(in Entity fromEntity, in Entity toEntity) {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)] 
+        public void CopyComponent(in Entity fromEntity, in Entity toEntity) {
             if (_isDisposed) {
                 throw new ObjectDisposedException(nameof(ComponentStorage<T>));
             }
@@ -150,8 +166,13 @@ namespace Sw1f1.Ecs {
         }
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void AddComponentInternal(in Entity entity, T component) {
-            _components.Add(entity.Id, component);
+        private void AddComponentInternal(in Entity entity, in T component) {
+            _components.Add(entity.Id, in component);
+        }
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void ReplaceComponentInternal(in Entity entity, in T component) {
+            _components.Replace(entity.Id, in component);
         }
         
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
@@ -165,11 +186,11 @@ namespace Sw1f1.Ecs {
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal override void Clear() {
+        void IComponentStorage.Clear() {
             _components.Clear();
         }
 
-        public override void Dispose() {
+        public void Dispose() {
             if (_isDisposed) {
                 return;
             }

@@ -146,10 +146,10 @@ namespace Sw1f1.Ecs.Tests {
             Assert.That(component.Value == 100, Is.True);
             
             component.Value = 200;
-            Assert.That(entity1.Get<Component1>().Value == 200, Is.True);
+            Assert.That(entity1.Get<Component1>().Value, Is.EqualTo(200));
             
             entity1.Replace(new Component1(300));
-            Assert.That(entity1.Get<Component1>().Value == 300, Is.True);
+            Assert.That(entity1.Get<Component1>().Value, Is.EqualTo(300));
             
             entity1.Remove<Component1>();
             Assert.That(entity1.Has<Component1>(), Is.False);
@@ -412,7 +412,7 @@ namespace Sw1f1.Ecs.Tests {
         }
     }
     
-    public struct IsTestEntity : IComponent { }
+    public struct IsTestEntity : ISerializableComponent { }
     public struct IsTestEntity1 : IComponent { }
     public struct IsTestEntity2 : IComponent { }
     public struct IsTestEntity3 : IComponent { }
@@ -461,7 +461,7 @@ namespace Sw1f1.Ecs.Tests {
     public struct Test1OneTick : IComponent, IOneTickComponent { }
     public struct Test2OneTick : IComponent, IOneTickComponent { }
 
-    public struct Component1 : IComponent {
+    public struct Component1 : ISerializableComponent {
         public int Value;
 
         public Component1(int value) {
@@ -469,7 +469,7 @@ namespace Sw1f1.Ecs.Tests {
         }
     }
     
-    public struct Component2 : IComponent, IAutoResetComponent<Component2>, IAutoCopyComponent<Component2> {
+    public struct Component2 : ISerializableComponent, IAutoResetComponent<Component2>, IAutoCopyComponent<Component2> {
         public bool Value;
 
         public Component2(bool value) {

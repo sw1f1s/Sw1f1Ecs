@@ -1,15 +1,15 @@
 namespace Sw1f1.Ecs {
-    internal struct AddComponentOperation<T> : IConcurrentOperation where T : struct, IComponent {
-        public Entity Entity;
-        public T Component;
+    internal readonly struct AddComponentOperation<T> : IConcurrentOperation where T : struct, IComponent {
+        public readonly Entity Entity;
+        public readonly T Component;
 
-        public AddComponentOperation(Entity entity, T component) {
+        public AddComponentOperation(Entity entity, in T component) {
             Entity = entity;
             Component = component;
         }
 
         public void Execute(IWorld world) {
-            world.AddComponent(Entity, ref Component);
+            world.AddComponent(Entity, in Component);
         }
     }   
 }

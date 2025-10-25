@@ -14,7 +14,7 @@ namespace Sw1f1.Ecs {
     internal class ComponentsStorage : IComponentsStorage, IDisposable {
         private readonly List<int> _oneTickComponents = new List<int>();
         private PoolFactory _poolFactory;
-        private SparseArray<AbstractComponentStorage> _components = new SparseArray<AbstractComponentStorage>(Options.COMPONENT_CAPACITY);
+        private SparseArray<IComponentStorage> _components = new SparseArray<IComponentStorage>(Options.COMPONENT_CAPACITY);
         private bool _isDisposed;
 
         public IReadOnlyList<int> OneTickStorages => _oneTickComponents;
@@ -24,7 +24,7 @@ namespace Sw1f1.Ecs {
         }
 
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
-        public AbstractComponentStorage Get(int componentId) {
+        public IComponentStorage Get(int componentId) {
             return _components.Get(componentId);
         }
         
@@ -45,11 +45,6 @@ namespace Sw1f1.Ecs {
             }
             
             return Unsafe.As<ComponentStorage<T>>(_components.Get(componentId));
-        }
-
-        [MethodImpl (MethodImplOptions.AggressiveInlining)]
-        internal AbstractComponentStorage GetComponentStorage(int componentId) {
-            return _components.Get(componentId);
         }
 
         [MethodImpl (MethodImplOptions.AggressiveInlining)]

@@ -63,7 +63,31 @@ namespace Sw1f1.Ecs {
             entity.Set<T>();
             return entity;
         }
-        
+
+        [MethodImpl (MethodImplOptions.AggressiveInlining)]
+        Entity IWorld.CreateEntity(int id, int gen) {
+            if (_entityStorage.Has(id)) {
+                var entityData = _entityStorage.Get(id);
+                entityData.IncreaseGen(gen);
+                return entityData.GetEntity();
+            }
+            
+            ref var newEntityData = ref _entityStorage.GetFreeEntity(id, gen);
+            var entity = newEntityData.GetEntity();
+#if DEBUG
+            OnCreateEntity?.Invoke(this, entity);
+#endif
+            return entity;
+        }
+
+        Entity IWorld.TryGetEntity(int id) {
+            if (_entityStorage.Has(id)) {
+                return _entityStorage.Get(id).GetEntity();
+            }
+            
+            return Entity.Empty;
+        }
+
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
         public Entity CopyEntity(in Entity entity) {
             if (_lock > 0) {
@@ -124,21 +148,36 @@ namespace Sw1f1.Ecs {
         }
 
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
-        void IWorld.AddComponent<T>(in Entity entity, ref T component) {
+        void IWorld.AddComponent<T>(in Entity entity, in T component) {
             if (_lock > 0) {
-                _concurrentBuffer.AddComponent(entity, ref component);
+                _concurrentBuffer.AddComponent(entity, in component);
                 return;
             }
             
             var storage = _componentsStorage.GetComponentStorage<T>();
-            storage.AddComponent(entity, ref component);
+            storage.AddComponent(entity, in component);
             _entityStorage.Get(entity).AddComponent(storage.Id);
             _filterMap.UpdateFilters(storage.Id);
 #if DEBUG
             OnAddComponent?.Invoke(this, entity, typeof(T));
 #endif
         }
-        
+
+        void IWorld.ReplaceComponent<T>(in Entity entity, in T component) {
+            if (_lock > 0) {
+                _concurrentBuffer.ReplaceComponent(entity, in component);
+                return;
+            }
+            
+            var storage = _componentsStorage.GetComponentStorage<T>();
+            storage.ReplaceComponent(entity, in component);
+            _entityStorage.Get(entity).AddComponent(storage.Id);
+            _filterMap.UpdateFilters(storage.Id);
+#if DEBUG
+            OnAddComponent?.Invoke(this, entity, typeof(T));
+#endif
+        }
+
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
         ref T IWorld.SetComponent<T>(in Entity entity) {
             if (_lock > 0) {
@@ -178,7 +217,7 @@ namespace Sw1f1.Ecs {
         }
 
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
-        private void RemoveComponentInternal(in Entity entity, AbstractComponentStorage storage) {
+        private void RemoveComponentInternal(in Entity entity, IComponentStorage storage) {
             if (storage.RemoveComponent(entity)) {
                 ref var entityData = ref _entityStorage.Get(entity);
                 entityData.RemoveComponent(storage.Id);
@@ -195,10 +234,17 @@ namespace Sw1f1.Ecs {
 #endregion
 
 #region Components
-        AbstractComponentStorage IWorld.GetComponentStorage(int componentId) {
+[MethodImpl (MethodImplOptions.AggressiveInlining)]
+        IComponentStorage IWorld.GetComponentStorage(int componentId) {
             return _componentsStorage.Get(componentId);
         }
+        
+        [MethodImpl (MethodImplOptions.AggressiveInlining)]
+        ComponentStorage<T> IWorld.GetComponentStorage<T>() {
+            return _componentsStorage.GetComponentStorage<T>();
+        }
 
+        [MethodImpl (MethodImplOptions.AggressiveInlining)]
         bool IWorld.HasComponentStorage(int componentId) {
             return _componentsStorage.Has(componentId);
         }

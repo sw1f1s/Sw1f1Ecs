@@ -32,10 +32,20 @@ namespace Sw1f1.Ecs {
         public bool Has(Entity entity) {
             return _entities.Has(entity.Id);
         }
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool Has(int id) {
+            return _entities.Has(id);
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref EntityData Get(Entity entity) {
             return ref _entities.Get(entity.Id);
+        }
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public ref EntityData Get(int id) {
+            return ref _entities.Get(id);
         }
 
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
@@ -47,6 +57,21 @@ namespace Sw1f1.Ecs {
             TryIncreasePool();
             var entity = _pool.GetLast();
             entity.IncreaseGen();
+            _pool.Remove(entity.Id);
+            _entities.Add(entity.Id, entity);
+            return ref _entities.Get(entity.Id);
+        }
+        
+        [MethodImpl (MethodImplOptions.AggressiveInlining)]
+        public ref EntityData GetFreeEntity(int id, int gen) {
+            if (_isDisposed) {
+                throw new ObjectDisposedException(nameof(EntityStorage));
+            }
+
+            TryIncreasePool(id);
+            
+            var entity = _pool.Get(id);
+            entity.IncreaseGen(gen);
             _pool.Remove(entity.Id);
             _entities.Add(entity.Id, entity);
             return ref _entities.Get(entity.Id);
@@ -83,9 +108,27 @@ namespace Sw1f1.Ecs {
                 return;
             }
 
-            int length = (int)_pool.Length;
+            int length = _pool.Length;
             int newLength = length * 2 - 1;
             for (int i = newLength; i >= length; i--) {
+                var data = new EntityData(new Entity(i, -1, _worldId), Options.COMPONENT_ENTITY_CAPACITY);
+                _pool.Add(i, data);
+            }
+        }
+        
+        [MethodImpl (MethodImplOptions.AggressiveInlining)]
+        private void TryIncreasePool(int minCount) {
+            if (_pool.Length > minCount) {
+                return;
+            }
+            
+            int length = _pool.Length;
+            int newLength = length * 2;
+            while (newLength <= minCount) {
+                newLength *= 2;
+            }
+            
+            for (int i = newLength - 1; i >= length; i--) {
                 var data = new EntityData(new Entity(i, -1, _worldId), Options.COMPONENT_ENTITY_CAPACITY);
                 _pool.Add(i, data);
             }

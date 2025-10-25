@@ -31,7 +31,7 @@ namespace Sw1f1.Ecs {
         }
         
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
-        public Entity GetEntity() => _entity;
+        public readonly Entity GetEntity() => _entity;
 
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
         public void AddComponent(int componentId) {
@@ -57,6 +57,10 @@ namespace Sw1f1.Ecs {
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
         public void IncreaseGen() => 
             _entity = _entity.IncreaseGen();
+        
+        [MethodImpl (MethodImplOptions.AggressiveInlining)]
+        public void IncreaseGen(int gen) => 
+            _entity = new Entity(_entity.Id, gen, _entity.WorldId);
 
         public void Dispose() {
             if (_isDisposed) {
