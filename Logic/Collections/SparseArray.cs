@@ -9,7 +9,7 @@ namespace Sw1f1.Ecs.Collections {
     [Il2CppSetOption (Option.NullChecks, false)]
     [Il2CppSetOption (Option.ArrayBoundsChecks, false)]
 #endif
-    public struct SparseArray<T> : IDisposable {
+    public struct SparseArray<T> : IReadCollection, IDisposable {
         private Entry[] _denseItems;
         private uint[] _sparseItems;
         private uint _denseItemsCount;
@@ -33,6 +33,21 @@ namespace Sw1f1.Ecs.Collections {
             Array.Copy(copy._denseItems, _denseItems, copy._denseItems.Length);
             Array.Copy(copy._sparseItems, _sparseItems, copy._sparseItems.Length);
             _isDisposed = false;
+        }
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public int GetCount() {
+            return (int)_denseItemsCount;
+        }
+        
+        /// <summary>
+        /// Only for debug (use Boxing)
+        /// </summary>
+        /// <param name="index"></param>
+        /// <returns></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public object GetItem(int index) {
+            return _denseItems[index].Value;
         }
         
         [MethodImpl (MethodImplOptions.AggressiveInlining)]

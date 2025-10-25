@@ -12,12 +12,13 @@ namespace Sw1f1.Ecs.Collections {
     [Il2CppSetOption (Option.NullChecks, false)]
     [Il2CppSetOption (Option.ArrayBoundsChecks, false)]
 #endif
-    public sealed class PooledList<T> : IDisposable {
+    public sealed class PooledList<T> : IReadCollection, IDisposable {
         private PoolAdapter<T> _adapter;
         private T[] _array;
         private int _count;
 
         public int Count => _count;
+
         public bool IsReadOnly => false;
         
         public T this[int index] {
@@ -30,6 +31,21 @@ namespace Sw1f1.Ecs.Collections {
         internal PooledList(PoolAdapter<T> adapter) {
             _adapter = adapter;
             _count = 0;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public int GetCount() {
+            return _count;
+        }
+        
+        /// <summary>
+        /// Only for debug (use Boxing)
+        /// </summary>
+        /// <param name="index"></param>
+        /// <returns></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public object GetItem(int index) {
+            return _array[index];
         }
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
