@@ -195,7 +195,7 @@ public sealed class TestInjectSystem : IInitSystem, IUpdateSystem {
 }
 ```
 
-### SNAPSHOT
+### Snapshot
 Supports world snapshot
 ```c#
  var componentFactory = new ComponentSnapshotFactory()
