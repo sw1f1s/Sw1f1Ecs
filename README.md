@@ -8,6 +8,7 @@
     - [Systems](#systems)
     - [Group Systems](#groupsystems)
     - [DI](#di)
+    - [Snapshot](#snapshot)
 
 ## API
 ### Worlds
@@ -192,4 +193,24 @@ public sealed class TestInjectSystem : IInitSystem, IUpdateSystem {
     public void Init() { }
     public void Update() { }
 }
+```
+
+### SNAPSHOT
+Supports world snapshot
+```c#
+ var componentFactory = new ComponentSnapshotFactory()
+        .Register<DefaultComponentPacker<Component1>>()
+        .Register<DefaultComponentPacker<Component2>>();
+            
+ var snapshotWriter = new SnapshotWriter(componentFactory);
+ var snapshotReader = new SnapshotReader(componentFactory);
+
+ //Create snapshot
+ var snapshot = snapshotWriter.Write(world1);
+
+ //Create world by snapshot
+ var world2 = snapshotReader.Read(snapshot);
+
+ //Past snapshot on world
+ snapshotReader.Read(snapshot, world3);
 ```
