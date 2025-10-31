@@ -65,7 +65,8 @@ namespace Sw1f1.Ecs {
                 throw new Exception(string.Format(ENTITY_EXCEPTION_DEAD_MESSAGE, entity));
             }
             
-            world.ReplaceComponent<T>(entity, in component);
+            world.RemoveComponent<T>(entity);
+            world.AddComponent<T>(entity, in component);
             return entity;
         }
         
