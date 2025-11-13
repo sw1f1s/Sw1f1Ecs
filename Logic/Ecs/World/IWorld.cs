@@ -38,7 +38,6 @@ namespace Sw1f1.Ecs {
         internal bool HasComponentStorage(int componentId);
         
         Filter GetFilter(FilterMask mask);
-        internal void UpdateFilters();
         internal void Lock();
         internal void Unlock();
         void Clear();

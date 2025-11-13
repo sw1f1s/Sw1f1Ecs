@@ -3,10 +3,14 @@ using Sw1f1.Ecs.Collections;
 
 namespace Sw1f1.Ecs {
     public class FilterMask : IDisposable {
+        protected int _mainComponent;
         protected BitMask _includes;
         protected BitMask _excludes;
         
+        internal int MainComponent => _mainComponent;
+        
         protected FilterMask() {
+            _mainComponent = -1;
             _includes = new BitMask(Options.COMPONENT_ENTITY_CAPACITY);
             _excludes = new BitMask(Options.COMPONENT_ENTITY_CAPACITY);
         }
@@ -25,9 +29,8 @@ namespace Sw1f1.Ecs {
 
         public static FilterMask Combine(FilterMask mask1, FilterMask mask2) {
             var mask = new FilterMask();
+            mask._mainComponent = mask1.MainComponent > 0 ? mask1.MainComponent : mask2.MainComponent;
             mask._includes = mask1._includes | mask2._includes;
-            mask._includes = mask1._includes | mask2._includes;
-            mask._excludes = mask1._excludes | mask2._excludes;
             mask._excludes = mask1._excludes | mask2._excludes;
             return mask;
         }
@@ -45,6 +48,7 @@ namespace Sw1f1.Ecs {
     public class FilterMaskExclude<Exc1> : FilterMask
         where Exc1 : struct, IComponent {
         public FilterMaskExclude() {
+            _mainComponent = ComponentStorageIndex<Exc1>.StaticId;
             _excludes.Set(ComponentStorageIndex<Exc1>.StaticId);
         }
     }
@@ -54,6 +58,7 @@ namespace Sw1f1.Ecs {
         where Exc2 : struct, IComponent {
         
         public FilterMaskExclude() {
+            _mainComponent = ComponentStorageIndex<Exc1>.StaticId;
             _excludes.Set(ComponentStorageIndex<Exc1>.StaticId);
             _excludes.Set(ComponentStorageIndex<Exc2>.StaticId);
         }
@@ -63,6 +68,7 @@ namespace Sw1f1.Ecs {
             where Inc1 : struct, IComponent {
         
         public FilterMask() : base() {
+            _mainComponent = ComponentStorageIndex<Inc1>.StaticId;
             _includes.Set(ComponentStorageIndex<Inc1>.StaticId);
         }
 
@@ -87,6 +93,7 @@ namespace Sw1f1.Ecs {
         where Inc1 : struct, IComponent
         where Inc2 : struct, IComponent {
         public FilterMask() : base() {
+            _mainComponent = ComponentStorageIndex<Inc1>.StaticId;
             _includes.Set(ComponentStorageIndex<Inc1>.StaticId);
             _includes.Set(ComponentStorageIndex<Inc2>.StaticId);
         }
@@ -113,6 +120,7 @@ namespace Sw1f1.Ecs {
         where Inc2 : struct, IComponent
         where Inc3 : struct, IComponent {
         public FilterMask() : base() {
+            _mainComponent = ComponentStorageIndex<Inc1>.StaticId;
             _includes.Set(ComponentStorageIndex<Inc1>.StaticId);
             _includes.Set(ComponentStorageIndex<Inc2>.StaticId);
             _includes.Set(ComponentStorageIndex<Inc3>.StaticId);
@@ -141,6 +149,7 @@ namespace Sw1f1.Ecs {
         where Inc3 : struct, IComponent 
         where Inc4 : struct, IComponent {
         public FilterMask() : base() {
+            _mainComponent = ComponentStorageIndex<Inc1>.StaticId;
             _includes.Set(ComponentStorageIndex<Inc1>.StaticId);
             _includes.Set(ComponentStorageIndex<Inc2>.StaticId);
             _includes.Set(ComponentStorageIndex<Inc3>.StaticId);
@@ -171,6 +180,7 @@ namespace Sw1f1.Ecs {
         where Inc4 : struct, IComponent
         where Inc5 : struct, IComponent{
         public FilterMask() : base() {
+            _mainComponent = ComponentStorageIndex<Inc1>.StaticId;
             _includes.Set(ComponentStorageIndex<Inc1>.StaticId);
             _includes.Set(ComponentStorageIndex<Inc2>.StaticId);
             _includes.Set(ComponentStorageIndex<Inc3>.StaticId);
@@ -203,6 +213,7 @@ namespace Sw1f1.Ecs {
         where Inc5 : struct, IComponent 
         where Inc6 : struct, IComponent{
         public FilterMask() : base() {
+            _mainComponent = ComponentStorageIndex<Inc1>.StaticId;
             _includes.Set(ComponentStorageIndex<Inc1>.StaticId);
             _includes.Set(ComponentStorageIndex<Inc2>.StaticId);
             _includes.Set(ComponentStorageIndex<Inc3>.StaticId);

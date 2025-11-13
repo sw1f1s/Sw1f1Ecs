@@ -80,6 +80,7 @@ namespace Sw1f1.Ecs {
             return entity;
         }
 
+        [MethodImpl (MethodImplOptions.AggressiveInlining)]
         Entity IWorld.TryGetEntity(int id) {
             if (_entityStorage.Has(id)) {
                 return _entityStorage.Get(id).GetEntity();
@@ -99,7 +100,7 @@ namespace Sw1f1.Ecs {
             foreach (var componentId in entityData.Components) {
                 _componentsStorage.Get(componentId).CopyComponent(entity, copyEntity);
                 _entityStorage.Get(copyEntity).AddComponent(componentId);
-                _filterMap.UpdateFilters(componentId);
+                _filterMap.SetDirty(componentId);
             }
 #if DEBUG
             OnCopyEntity?.Invoke(this, copyEntity);
@@ -130,7 +131,7 @@ namespace Sw1f1.Ecs {
             var entityData = _entityStorage.Get(entity);
             foreach (var componentId in entityData.Components) {
                 _componentsStorage.Get(componentId).RemoveComponent(entity);
-                _filterMap.UpdateFilters(componentId);
+                _filterMap.SetDirty(componentId);
             }
             _entityStorage.Return(entityData);
         }
@@ -157,7 +158,7 @@ namespace Sw1f1.Ecs {
             var storage = _componentsStorage.GetComponentStorage<T>();
             storage.AddComponent(entity, in component);
             _entityStorage.Get(entity).AddComponent(storage.Id);
-            _filterMap.UpdateFilters(storage.Id);
+            _filterMap.SetDirty(storage.Id);
 #if DEBUG
             OnAddComponent?.Invoke(this, entity, typeof(T));
 #endif
@@ -172,7 +173,7 @@ namespace Sw1f1.Ecs {
             var storage = _componentsStorage.GetComponentStorage<T>();
             storage.ReplaceComponent(entity, in component);
             _entityStorage.Get(entity).AddComponent(storage.Id);
-            _filterMap.UpdateFilters(storage.Id);
+            _filterMap.SetDirty(storage.Id);
 #if DEBUG
             OnAddComponent?.Invoke(this, entity, typeof(T));
 #endif
@@ -186,7 +187,7 @@ namespace Sw1f1.Ecs {
             
             var storage = _componentsStorage.GetComponentStorage<T>();
             _entityStorage.Get(entity).AddComponent(storage.Id);
-            _filterMap.UpdateFilters(storage.Id);
+            _filterMap.SetDirty(storage.Id);
 #if DEBUG
             OnAddComponent?.Invoke(this, entity, typeof(T));
 #endif
@@ -221,7 +222,7 @@ namespace Sw1f1.Ecs {
             if (storage.RemoveComponent(entity)) {
                 ref var entityData = ref _entityStorage.Get(entity);
                 entityData.RemoveComponent(storage.Id);
-                _filterMap.UpdateFilters(storage.Id);
+                _filterMap.SetDirty(storage.Id);
                 if (entityData.IsEmpty) {
                     _entityStorage.Return(entityData);
                 }   
@@ -254,11 +255,6 @@ namespace Sw1f1.Ecs {
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
         public Filter GetFilter(FilterMask mask) {
             return _filterMap.GetFilter(mask);
-        }
-        
-        [MethodImpl (MethodImplOptions.AggressiveInlining)]
-        void IWorld.UpdateFilters() {
-            _filterMap.UpdateFilters();
         }
 #endregion
 

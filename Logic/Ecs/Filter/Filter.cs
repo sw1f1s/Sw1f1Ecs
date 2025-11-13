@@ -12,16 +12,18 @@ namespace Sw1f1.Ecs {
     [Il2CppSetOption (Option.ArrayBoundsChecks, false)]
 #endif
     public sealed class Filter : IDisposable {
+        private FilterMap _map;
         private IWorld _world;
-        private SparseArray<Entity> _cache = new SparseArray<Entity>(Options.ENTITY_CAPACITY);
+        private SparseArray<Entity> _entities = new SparseArray<Entity>(Options.ENTITY_CAPACITY);
         
+        private int _mainComponent;
         private BitMask _includes;
         private BitMask _excludes;
         
-        private bool _needUpdate;
+        private bool _isDirty;
         private bool _isDisposed;
         
-        internal SparseArray<Entity> Cache => _cache;
+        internal SparseArray<Entity> Entities => _entities;
         public BitMask Includes => _includes;
         public BitMask Excludes => _excludes;
         
@@ -32,11 +34,13 @@ namespace Sw1f1.Ecs {
         internal IReadOnlyList<Type> TypeExcludes => _world.GetTypeComponents(_excludes);
 #endif
         
-        internal Filter(FilterMask mask, IWorld world) {
+        internal Filter(FilterMask mask, FilterMap map, IWorld world) {
+            _map = map;
             _world = world;
+            _mainComponent = mask.MainComponent;
             _includes = mask.GetIncludes();
             _excludes = mask.GetExcludes();
-            _needUpdate = true;
+            _isDirty = true;
         }
         
         public Enumerator GetEnumerator() {
@@ -44,7 +48,7 @@ namespace Sw1f1.Ecs {
                 throw new ObjectDisposedException(GetType().Name);
             }
             
-            Update();
+            UpdateIfDirty();
             return new Enumerator(this);
         }
         
@@ -54,23 +58,21 @@ namespace Sw1f1.Ecs {
                 throw new ObjectDisposedException(GetType().Name);
             }
             
-            Update();
-            return _cache.Count;
+            UpdateIfDirty();
+            return _entities.Count;
         }
         
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
-        public List<Entity> FillEntities(List<Entity> entities) {
+        public void FillEntities(ref List<Entity> entities) {
             if (_isDisposed) {
                 throw new ObjectDisposedException(GetType().Name);
             }
             
-            Update();
+            UpdateIfDirty();
             entities.Clear();
             foreach (var entity in this) {
                 entities.Add(entity);
             }
-
-            return entities;
         }
         
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
@@ -79,7 +81,7 @@ namespace Sw1f1.Ecs {
                 throw new ObjectDisposedException(GetType().Name);
             }
 
-            Update();
+            UpdateIfDirty();
             foreach (var entity in this) {
                 return entity;
             }
@@ -88,30 +90,34 @@ namespace Sw1f1.Ecs {
         }
         
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
-        internal void SetNeedUpdate() {
-            _needUpdate = true;
+        internal void SetDirty() {
+            _isDirty = true;
         }
         
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
-        internal void Update() {
+        internal void UpdateIfDirty() {
             if (_isDisposed) {
                 throw new ObjectDisposedException(GetType().Name);
             }
-
-            _world.UpdateFilters();
-            if (!_needUpdate) {
+            
+            _map.SetDirty();
+            if (!_isDirty) {
                 return;
             }
 
-            _cache.Clear();
-            foreach (ref var entityData in _world.Entities) {
+            _entities.Clear();
+            _isDirty = false;
+            
+            if (!_world.HasComponentStorage(_mainComponent)) {
+                return;
+            }
+            
+            foreach (var entity in _world.GetComponentStorage(_mainComponent).Entities) {
+                var entityData = _world.Entities.Get(entity.Id);
                 if (entityData.Components.HasAllCollision(_includes) && !entityData.Components.HasAnyCollision(_excludes)) {
-                    var entity = entityData.GetEntity();
-                    _cache.Add(entity.Id, entity);
+                    _entities.Add(entity.Id, entity);
                 }
             }
-
-            _needUpdate = false;
         }
 
         public void Dispose() {
@@ -121,16 +127,17 @@ namespace Sw1f1.Ecs {
             
             _isDisposed = true;
             _world = null;
+            _map = null;
             _includes.Dispose();
             _excludes.Dispose();
-            _cache.Dispose();
+            _entities.Dispose();
         }
         
         public struct Enumerator : IDisposable {
             private SparseArray<Entity>.Enumerator<Entity> _cache;
 
             internal Enumerator (Filter filter) {
-                _cache = filter._cache.GetEnumerator();
+                _cache = filter._entities.GetEnumerator();
             }
 
             public Entity Current {

@@ -1,4 +1,5 @@
 using System;
+using Sw1f1.Ecs.Collections;
 
 namespace Sw1f1.Ecs {
     internal interface IComponentStorage : IDisposable {
@@ -7,9 +8,10 @@ namespace Sw1f1.Ecs {
         Type ComponentType { get; }
         int Id { get; }
         int Count { get; }
+        ref SparseArray<Entity> Entities { get; }
+            
         ComponentSnapshot GetComponentSnapshot(ComponentSnapshotFactory factory,  in Entity entity);
         IComponent GetGeneralizedComponent(in Entity entity);
-        int[] GetRentedPoolEntities();
         bool HasComponent(in Entity entity);
         bool RemoveComponent(in Entity entity);
         void CopyComponent(in Entity fromEntity, in Entity toEntity);

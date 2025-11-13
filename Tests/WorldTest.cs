@@ -221,18 +221,18 @@ namespace Sw1f1.Ecs.Tests {
             
             var filter1 = world.GetFilter(new FilterMask<Component1>());
             Assert.That(filter1.GetCount(), Is.EqualTo(3));
-            filter1.FillEntities(cacheEntities);
+            filter1.FillEntities(ref cacheEntities);
             Assert.That(cacheEntities[0] == entity1, Is.True);
             Assert.That(cacheEntities[1] == entity2, Is.True);
             Assert.That(cacheEntities[2] == entity3, Is.True);
             
             var filter2 = world.GetFilter(new FilterMask<Component1>.Exclude<Component3>());
-            filter2.FillEntities(cacheEntities);
+            filter2.FillEntities(ref cacheEntities);
             Assert.That(filter2.GetCount(), Is.EqualTo(1));
             Assert.That(cacheEntities[0], Is.EqualTo(entity3));
             
             var filter3 = world.GetFilter(new FilterMask<Component1>.Exclude<Component2>());
-            filter3.FillEntities(cacheEntities);
+            filter3.FillEntities(ref cacheEntities);
             Assert.That(filter3.GetCount(), Is.EqualTo(2));
             Assert.That(cacheEntities[0], Is.EqualTo(entity2));
             Assert.That(cacheEntities[1], Is.EqualTo(entity3));

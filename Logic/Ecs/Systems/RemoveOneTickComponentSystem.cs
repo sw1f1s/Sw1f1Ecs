@@ -11,13 +11,12 @@ namespace Sw1f1.Ecs {
         void IUpdateSystem.Update() {
             foreach (var componentId in _world.ComponentsStorage.OneTickStorages) {
                 var storage = _world.ComponentsStorage.Get(componentId);
-                var entities = storage.GetRentedPoolEntities();
+                var entities = storage.Entities;
                 for (int i = storage.Count - 1; i >= 0; i--) {
-                    int entityIdx = entities[i];
+                    int entityIdx = entities.DenseItems[i].Value.Id;
                     var entity = _world.Entities.Get(entityIdx).GetEntity();
                     _world.RemoveComponent(entity, componentId);
                 }
-                ArrayPool<int>.Shared.Return(entities);
             }
         }
     }

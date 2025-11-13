@@ -43,14 +43,14 @@ namespace Sw1f1.Ecs {
         }
         
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
-        public void UpdateFilters(int componentId) {
+        public void SetDirty(int componentId) {
             if (!_componentForUpdate.Has(componentId)) {
                 _componentForUpdate.Add(componentId, componentId);
             }
         }
         
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
-        public void UpdateFilters() {
+        public void SetDirty() {
             if (_componentForUpdate.Count == 0) {
                 return;
             }
@@ -58,7 +58,7 @@ namespace Sw1f1.Ecs {
             foreach (var component in _componentForUpdate) {
                 if (_filterComponentsMaps.TryGetValue(component, out var filterIndexes)) {
                     foreach (var index in filterIndexes) {
-                        _filters[index].SetNeedUpdate();
+                        _filters[index].SetDirty();
                     }
                 }
             }
@@ -84,7 +84,7 @@ namespace Sw1f1.Ecs {
 
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
         private Filter CreateNewFilter(FilterMask mask, int hashId) {
-            var newFilter = new Filter(mask, _world);
+            var newFilter = new Filter(mask, this, _world);
             int filterIndex = _filters.Count;
             _filters.Add(newFilter);
             if (_filterMaskMaps.TryGetValue(hashId, out var collisions)) {

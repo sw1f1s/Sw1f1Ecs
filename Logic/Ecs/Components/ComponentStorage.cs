@@ -20,6 +20,7 @@ namespace Sw1f1.Ecs {
         private IComponentStorage.AutoDestroyHandler<T> _autoDestroyHandler;
         private IComponentStorage.AutoPoolResetHandler<T> _autoPoolResetHandler;
         private IComponentStorage.AutoPoolDestroyHandler<T> _autoPoolDestroyHandler;
+        private SparseArray<Entity> _entities;
         private SparseArray<T> _components;
         private bool _isDisposed;
 
@@ -28,10 +29,12 @@ namespace Sw1f1.Ecs {
         public Type ComponentType => typeof(T);
         public int Id => ComponentStorageIndex<T>.StaticId;
         public int Count => (int)_components.Count;
+        public ref SparseArray<Entity> Entities => ref _entities;
 
         internal ComponentStorage(PoolFactory poolFactory) {
             _poolFactory = poolFactory;
             _components = new SparseArray<T>(Options.ENTITY_CAPACITY);
+            _entities = new SparseArray<Entity>(Options.ENTITY_CAPACITY);
             if (IComponentStorage.TryGetInterface(ref _defaultInstance, out IAutoCopyComponent<T> autoCopy)) {
                 _autoCopyHandler = autoCopy.Copy;
             }
@@ -82,16 +85,7 @@ namespace Sw1f1.Ecs {
         public IComponent GetGeneralizedComponent(in Entity entity) {
             return GetComponent(entity);
         }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public int[] GetRentedPoolEntities() {
-            var entities = ArrayPool<int>.Shared.Rent(Count);
-            for (int i = 0; i < _components.Count; i++) {
-                entities[i] = (int)_components.DenseItems[i].Index;
-            }
-            return entities;
-        }
-
+        
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ref T GetComponent(in Entity entity) {
             if (_isDisposed) {
@@ -142,6 +136,7 @@ namespace Sw1f1.Ecs {
                 _autoDestroyHandler?.Invoke(ref component);
                 _autoPoolDestroyHandler?.Invoke(ref component, _poolFactory);
                 _components.Remove(entity.Id);
+                _entities.Remove(entity.Id);
                 return true;
             }
             
@@ -168,6 +163,7 @@ namespace Sw1f1.Ecs {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void AddComponentInternal(in Entity entity, in T component) {
             _components.Add(entity.Id, in component);
+            _entities.Add(entity.Id, in entity);
         }
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -188,6 +184,7 @@ namespace Sw1f1.Ecs {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void IComponentStorage.Clear() {
             _components.Clear();
+            _entities.Clear();
         }
 
         public void Dispose() {
@@ -203,6 +200,8 @@ namespace Sw1f1.Ecs {
             _autoPoolDestroyHandler = null;
             _components.Dispose();
             _components = default;
+            _entities.Dispose();
+            _entities = default;
             _poolFactory = null;
         }
     }   
