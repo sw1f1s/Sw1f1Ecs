@@ -169,6 +169,7 @@ namespace Sw1f1.Ecs {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void ReplaceComponentInternal(in Entity entity, in T component) {
             _components.Replace(entity.Id, in component);
+            _entities.Replace(entity.Id, in entity);
         }
         
         [MethodImpl (MethodImplOptions.AggressiveInlining)]
