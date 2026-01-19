@@ -84,13 +84,13 @@ namespace Sw1f1.Ecs.Tests {
             entity1.GetOrSet<Component1>();
             Assert.That(filter1.GetCount(), Is.EqualTo(1));
             Assert.That(entity1.Id, Is.EqualTo(0));
-            Assert.That(entity1.Gen, Is.EqualTo(0));
+            Assert.That(entity1.Gen, Is.EqualTo(1));
             
             var entity2 = world.CreateEntity<IsTestEntity>();
             entity1.GetOrSet<Component2>();
             Assert.That(filter2.GetCount(), Is.EqualTo(1));
             Assert.That(entity2.Id, Is.EqualTo(1));
-            Assert.That(entity2.Gen, Is.EqualTo(0));
+            Assert.That(entity2.Gen, Is.EqualTo(1));
             
             entity1.Destroy();
             
@@ -102,7 +102,7 @@ namespace Sw1f1.Ecs.Tests {
             Assert.That(filter1.GetCount(), Is.EqualTo(0));
             Assert.That(filter3.GetCount(), Is.EqualTo(1));
             Assert.That(entity3.Id, Is.EqualTo(0));
-            Assert.That(entity3.Gen, Is.EqualTo(1));
+            Assert.That(entity3.Gen, Is.EqualTo(2));
             
             entity2.Remove<IsTestEntity>();
             Assert.That(entity2.IsAlive(), Is.False);

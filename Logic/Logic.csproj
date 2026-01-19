@@ -13,6 +13,7 @@
         <Nullable>enable</Nullable>
         <RootNamespace>Sw1f1.Ecs</RootNamespace>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <LangVersion>default</LangVersion>
     </PropertyGroup>
     <ItemGroup>
       <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="6.1.2" />
