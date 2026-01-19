@@ -23,7 +23,7 @@ namespace Sw1f1.Ecs {
             _entities = new SparseArray<EntityData>(capacity);
             _pool = new SparseArray<EntityData>(capacity);
             for (int i = _pool.Length - 1; i >= 0; i--) {
-                var data = new EntityData(new Entity(i, -1, _worldId), Options.COMPONENT_ENTITY_CAPACITY);
+                var data = new EntityData(new Entity(i, 0, _worldId), Options.COMPONENT_ENTITY_CAPACITY);
                 _pool.Add(i, data);
             }
         }
@@ -111,7 +111,7 @@ namespace Sw1f1.Ecs {
             int length = _pool.Length;
             int newLength = length * 2 - 1;
             for (int i = newLength; i >= length; i--) {
-                var data = new EntityData(new Entity(i, -1, _worldId), Options.COMPONENT_ENTITY_CAPACITY);
+                var data = new EntityData(new Entity(i, 0, _worldId), Options.COMPONENT_ENTITY_CAPACITY);
                 _pool.Add(i, data);
             }
         }
@@ -129,7 +129,7 @@ namespace Sw1f1.Ecs {
             }
             
             for (int i = newLength - 1; i >= length; i--) {
-                var data = new EntityData(new Entity(i, -1, _worldId), Options.COMPONENT_ENTITY_CAPACITY);
+                var data = new EntityData(new Entity(i, 0, _worldId), Options.COMPONENT_ENTITY_CAPACITY);
                 _pool.Add(i, data);
             }
         }
