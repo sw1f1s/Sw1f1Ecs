@@ -90,7 +90,7 @@ namespace Sw1f1.Ecs {
             if (_filterMaskMaps.TryGetValue(hashId, out var collisions)) {
                 collisions.Add(filterIndex);
             }else {
-                _filterMaskMaps.Add(hashId, new List<int>(filterIndex)); 
+                _filterMaskMaps.Add(hashId, new List<int>() { filterIndex }); 
             }
 
             return newFilter;

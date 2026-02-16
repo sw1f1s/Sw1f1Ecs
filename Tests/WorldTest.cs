@@ -237,9 +237,14 @@ namespace Sw1f1.Ecs.Tests {
             Assert.That(cacheEntities[0], Is.EqualTo(entity2));
             Assert.That(cacheEntities[1], Is.EqualTo(entity3));
             
+            
             var filterMask12 = new FilterMask<Component1, Component2>();
             var filterMask21 = new FilterMask<Component2, Component1>();
             Assert.That(filterMask12.GetHashId(), Is.EqualTo(filterMask21.GetHashId()));
+            
+            var filter12 = world.GetFilter(filterMask12);
+            var filter21 = world.GetFilter(filterMask21);
+            Assert.That(filter12, Is.EqualTo(filter21));
             
             var filterMask12_3 = new FilterMask<Component1, Component2>.Exclude<Component3>();
             var filterMask21_3 = new FilterMask<Component2, Component1>.Exclude<Component3>();
