@@ -67,6 +67,11 @@ namespace Sw1f1.Ecs.Collections {
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public ref T GetItemRef(int index) {
+            return ref _array[index];
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Add(T item) {
             if (_array == null) {
                 throw new Exception("Array is not rent on pool");
@@ -188,6 +193,19 @@ namespace Sw1f1.Ecs.Collections {
             _count--;
             if (index < _count) {
                 Array.Copy(_array, index + 1, _array, index, _count - index);   
+            }
+            _array[_count] = default!;
+        }
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void SmartRemoveAt(int index) {
+            if (_array == null) {
+                throw new Exception("Array is not rent on pool");
+            }
+            
+            _count--;
+            if (index < _count) {
+                _array[index] = _array[_count];
             }
             _array[_count] = default!;
         }

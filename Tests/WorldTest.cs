@@ -175,6 +175,24 @@ namespace Sw1f1.Ecs.Tests {
             Assert.That(entity1.Has<Component5>(), Is.False);
             Assert.That(entity1Copy.GetOrSet<Component5>().Value.Count, Is.EqualTo(2));
             
+            Assert.That(entity1.GetOrSet<Component6>().Value.Count, Is.EqualTo(0));
+            entity1.GetOrSet<Component6>().Value.Add(1, 1);
+            Assert.That(entity1.GetOrSet<Component6>().Value.Count, Is.EqualTo(1));
+            
+            var entity1Copy2 = entity1.Copy();
+            entity1Copy2.GetOrSet<Component6>().Value.Add(2, 2);
+            
+            Assert.That(entity1.GetOrSet<Component6>().Value.Count, Is.EqualTo(1));
+            Assert.That(entity1Copy2.GetOrSet<Component6>().Value.Count, Is.EqualTo(2));
+            
+            entity1.Remove<Component6>();
+            Assert.That(entity1.Has<Component6>(), Is.False);
+            Assert.That(entity1Copy2.GetOrSet<Component6>().Value.Count, Is.EqualTo(2));
+            
+            entity1Copy2.Get<Component6>().Value.Remove(2);
+            Assert.That(entity1Copy2.GetOrSet<Component6>().Value.Count, Is.EqualTo(1));
+            Assert.That(entity1Copy2.GetOrSet<Component6>().Value.GetFirst(), Is.EqualTo(1));
+            
             world.Destroy();
         }
         
@@ -527,6 +545,22 @@ namespace Sw1f1.Ecs.Tests {
 
         public void Destroy(ref Component5 c, IPoolFactory poolFactory) {
             c.Value.Return();
+        }
+    }
+    
+    public struct Component6 : IComponent, IAutoPoolComponent<Component6>, IAutoCopyComponent<Component6> {
+        public PooledSparseArray<int> Value;
+        
+        public void Reset(ref Component6 c, IPoolFactory poolFactory) {
+            c.Value = new PooledSparseArray<int>(4, poolFactory);
+        }
+
+        public void Copy(ref Component6 src, ref Component6 dst) {
+            dst.Value = new PooledSparseArray<int>(src.Value);
+        }
+
+        public void Destroy(ref Component6 c, IPoolFactory poolFactory) {
+            c.Value.Dispose();
         }
     }
 
