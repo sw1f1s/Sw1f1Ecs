@@ -50,6 +50,9 @@ namespace Sw1f1.Ecs.Collections {
             }
             
             _denseItems.Add(new Entry(id, item));
+            while (_sparseItems.Count <= id) {
+                _sparseItems.Add(0);
+            }
             _sparseItems[id] = _denseItems.Count;
         }
         
