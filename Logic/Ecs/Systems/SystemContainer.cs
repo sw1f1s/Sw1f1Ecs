@@ -65,7 +65,13 @@ namespace Sw1f1.Ecs {
                     OnStartSystemExecute?.Invoke(_updateSystems[i]);
                 }
 #endif
+#if ECS_UNITY_PROFILER && DEBUG
+                UnityEngine.Profiling.Profiler.BeginSample(ProfilerUtilities.GetCleanGenericTypeName(system.GetType()));      
+#endif
                 _updateSystems[i].Update();
+#if ECS_UNITY_PROFILER && DEBUG
+                UnityEngine.Profiling.Profiler.EndSample();
+#endif
 #if DEBUG
                 if (_updateSystems[i] is not InternalGroupSystem) {
                     OnEndSystemExecute?.Invoke(_updateSystems[i]);
